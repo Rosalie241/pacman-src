@@ -3,7 +3,7 @@ prefix=/usr/local
 script:
 	echo "#!/usr/bin/env sh" > pacman-src
 	cat src/functions/*/* >> pacman-src
-	cat src/main >> pacman-src
+	cat src/main.sh >> pacman-src
 	chmod +x pacman-src
 clean:
 	rm pacman-src
