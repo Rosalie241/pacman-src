@@ -2,6 +2,14 @@
 if [ ! "$XDG_CACHE_HOME" ]; then
 	XDG_CACHE_HOME="$HOME/.cache"
 fi
+# Declare colors
+#
+_color_red='\033[0;31m'
+_color_yel='\033[0;33m'
+_color_blue='\033[0;34m'
+_color_reset='\033[0m' 
+# Declare other stuff
+#
 _target_dir="$XDG_CACHE_HOME/pacman-src"
 _update=no
 _build_only=no
@@ -44,9 +52,13 @@ function _update_symlinks() {
 				if [[ $package != *repos* ]]
 				then
 					package=$(echo $package | rev | cut -d'/' -f3 | rev)
-					if [ ! -d "$_target_dir/packages/$item" ] 
-	       				then 
-						ln -s "$_target_dir/packages/$package" "$_target_dir/packages/$item" 
+					if [ ! -d "$_target_dir/packages/$item" ] && \
+						[ ! -f "$_target_dir/packages/$package" ]
+	       				then
+						_source="$_target_dir/packages/$package"
+						_target="$_target_dir/packages/$item"
+						echo -e "> Linking ${_color_yel}$_source${_color_reset} to ${_color_blue}$_target${_color_reset}"
+						ln -s "$_source" "$_target"
 					fi
 				fi
        			done
@@ -78,7 +90,7 @@ function _start_build () {
 				cp *.pkg.* "$_target_dir/build/"
 			fi
 		else
-			echo -e "\n==> Build failed!\n"
+			echo -e "\n${_color_red}==> Build failed!${_color_reset}\n"
 			exit 1
 		fi
 	else
@@ -108,6 +120,6 @@ _update_cache
 _update_symlinks
 for package in $_packages
 do
-	echo -e "\n==> Building $package\n"
+	echo -e "\n==> Building ${_color_blue}$package${_color_reset}\n"
 	_start_build "$package"
 done
