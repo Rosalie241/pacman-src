@@ -5,6 +5,8 @@ fi
 _target_dir="$XDG_CACHE_HOME/pacman-src"
 _update=no
 _build_only=no
+_skipinteg=no
+_noconfirm=no
 _makepkg_flags="-sci"
 # clone the package repo to init the cache
 #
@@ -30,17 +32,30 @@ function _update_cache() {
 # Start the build using makepkg
 #
 function _start_build () {
+	if [ "$_skipinteg" = "yes" ]
+	then
+		_makepkg_flags+=" --skipinteg"
+	fi
+	if [ "$_noconfirm" = "yes" ]
+	then
+		_makepkg_flags+=" --noconfirm"
+	fi
 	if [ -d  "$_target_dir/packages/$1" ]
 	then
 		cd "$_target_dir/packages/$1/trunk"
-		makepkg $_makepkg_flags
-		if [ "$_build_only" = "yes" ]
+		if makepkg $_makepkg_flags
 		then
-			if [ ! -d "$_target_dir/build" ]
+			if [ "$_build_only" = "yes" ]
 			then
-				mkdir -p "$_target_dir/build"
+				if [ ! -d "$_target_dir/build" ]
+				then
+					mkdir -p "$_target_dir/build"
+				fi
+				cp *.pkg.* "$_target_dir/build/"
 			fi
-			cp *.pkg.* "$_target_dir/build/"
+		else
+			echo -e "\n==> Build failed!\n"
+			exit 1
 		fi
 	else
 		echo -e "\n==> Invalid package!\n"
@@ -52,11 +67,15 @@ for item in $@
 do
 	case $item in
 		--build |-b)  _makepkg_flags="-sc"; _build_only=yes;;
-		--update|-u)  _update=yes	  ;;
+		--update|-u)  _update=yes	  	    	   ;;
+		--skipchecks|-s) _skipinteg="yes";;
+		--noconfirm|-n)	_noconfirm="yes";;
 		--help  |-h) 
-			echo "$0 [package]		| Builds and installs the package"
-			echo "$0 [--update/-u]	| Updates the cache		 "
-			echo "$0 [--build/-b]	| Build-only, no installing	 "
+			echo "$0 [package]			| Builds and installs the package"
+			echo "$0 [--update/-u]		| Updates the cache		 "
+			echo "$0 [--build/-b]		| Build-only, no installing	 "
+			echo "$0 [--skipchecks|-s]		| Skips any integrity check"
+			echo "$0 [--noconfirm|-n]		| No confirmation"
 			;;
 		*) _packages+="$item"
 	esac
