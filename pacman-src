@@ -75,51 +75,41 @@ function _update_symlinks() {
 		done
 	fi
 }
+function _build_cd () {
+	_found_dir=false
+	for arch in $_repo_archs
+	do
+		for _repo in $@
+			do
+			_target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$repo-$arch"
+			if [ -d "$_target_build_dir" ]; then
+				_found_dir=true
+				cd "$_target_build_dir"
+			fi
+		done
+	done
+	if [ "$_found_dir" = "false" ]
+	then
+		echo -e "=> ${_color_yel}$_pkgname${_color_reset} not found in $_repo_version repos, building latest..\n"
+		cd "$_target_dir/packages/$repo/$_pkgname/trunk"
+	fi
+}
 # Start the build using makepkg
 #
 function _start_build () {
 	for repo in $_repos
 	do
-		if [ -d  "$_target_dir/packages/$repo/$1" ]
+		_pkgname=$1
+		if [ -d  "$_target_dir/packages/$repo/$_pkgname" ]
 		then
-			_found_dir=false
 			_pkg_not_found=no
 			if [ "$_repo_testing" = "yes" ]; then
-				for arch in $_repo_archs
-				do
-					for _repo in $_testing_repos
-					do
-						_target_build_dir="$_target_dir/packages/$_repo/$1/repos/$repo-$arch"
-						if [ -d "$_target_build_dir" ]; then
-							_found_dir=true
-							cd "$_target_build_dir"
-						fi
-					done
-				done
-				if [ "$_found_dir" = "false" ]
-				then
-					echo -e "=> ${_color_yel}$1${_color_reset} not found in testing repos, building latest..\n"
-					cd "$_target_dir/packages/$repo/$1/trunk"
-				fi
+				_repo_version="testing"
+				_build_cd $_testing_repos
 			else
-				for arch in $_repo_archs
-				do
-					for _repo in $_stable_repos
-					do
-						_target_build_dir="$_target_dir/packages/$_repo/$1/repos/$repo-$arch"
-						if [ -d "$_target_build_dir" ]; then
-							_found_dir=true
-							cd "$_target_build_dir"
-						fi
-					done
-				done
-				if [ "$_found_dir" = "false" ]
-				then
-					echo -e "=> ${_color_yel}$1${_color_reset} not found in stable repos, building latest..\n"
-					cd "$_target_dir/packages/$repo/$1/trunk"
-				fi
+				_repo_version="stable"
+				_build_cd $_stable_repos
 			fi
-			#cd "$_target_dir/packages/$repo/$1/trunk"
 			if makepkg $_makepkg_flags
 			then
 				if [ "$_build_only" = "yes" ]
