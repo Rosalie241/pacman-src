@@ -13,10 +13,8 @@ _color_reset='\033[0m'
 _target_dir="$XDG_CACHE_HOME/pacman-src"
 _update=no
 _build_only=no
-_skipinteg=no
-_noconfirm=no
 _repo_testing=no
-_makepkg_flags="-sci"
+_makepkg_flags="-sc"
 _repos="core community"
 _stable_repos="core community extra multilib"
 _testing_repos="testing community-testing multilib-testing"
@@ -80,14 +78,6 @@ function _update_symlinks() {
 # Start the build using makepkg
 #
 function _start_build () {
-	if [ "$_skipinteg" = "yes" ]
-	then
-		_makepkg_flags+=" --skipinteg"
-	fi
-	if [ "$_noconfirm" = "yes" ]
-	then
-		_makepkg_flags+=" --noconfirm"
-	fi
 	for repo in $_repos
 	do
 		if [ -d  "$_target_dir/packages/$repo/$1" ]
@@ -139,6 +129,13 @@ function _start_build () {
 						mkdir -p "$_target_dir/build"
 					fi
 					cp *.pkg.* "$_target_dir/build/"
+				else
+					echo -e "\n==> Installing $1\n"
+					if ! makepkg -i
+					then
+						echo -e "\n${_color_red}==> Installing $1 failed!${_color_reset}"
+						exit 1
+					fi
 				fi
 			else
 				echo -e "\n${_color_red}==> Build failed!${_color_reset}\n"
@@ -156,18 +153,20 @@ _init_cache
 for item in $@	
 do
 	case $item in
-		--build |-b) _makepkg_flags="-sc"; _build_only=yes;;
-		--update|-u) _update=yes	  	    	   ;;
-		--skipchecks|-s) _skipinteg="yes";;
-		--noconfirm|-n) _noconfirm="yes";;
+		--build |-b) _build_only=yes;;
+		--update|-u) _update=yes;;
+		--skipchecks|-s) _makepkg_flags+=" --skipinteg";;
+		--noconfirm|-n) _makepkg_flags+=" --noconfirm";;
 		--testing|-t) _repo_testing="yes";;
+		--force|-f) _makepkg_flags+=" -f";;
 		--help  |-h) 
-			echo "$0 [package]			| Builds and installs the package"
-			echo "$0 [--update/-u]		| Updates the cache		 "
-			echo "$0 [--build/-b]		| Build-only, no installing	 "
-			echo "$0 [--skipchecks|-s]		| Skips any integrity check"
-			echo "$0 [--noconfirm|-n]		| No confirmation"
-			echo "$0 [--testing|-t]			| Builds the latest version (from testing repo)"
+			echo "$0 [package]			| Builds and installs the package	"
+			echo "$0 [--update|-u]		| Updates the cache		 			"
+			echo "$0 [--build|-b]		| Build-only, no installing	 		"
+			echo "$0 [--force|-f		| Force overwrite built package		"
+			echo "$0 [--skipchecks|-s]		| Skips any integrity check		"
+			echo "$0 [--noconfirm|-n]		| No confirmation				"
+			echo "$0 [--testing|-t]		| Builds the latest version			"
 			;;
 		*) _packages+="$item"
 	esac
