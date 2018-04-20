@@ -11,7 +11,7 @@ _makepkg_flags="-sci"
 # clone the package repo to init the cache
 #
 function _init_cache() {
-	if [ ! -d "$_target_dir" ] && \
+	if [ ! -d "$_target_dir" ] || \
 		[ ! -d "$_target_dir/packages" ]
 	then
 		mkdir -p "$_target_dir"
@@ -40,9 +40,14 @@ function _update_symlinks() {
 			source $package 2>/dev/null 
 			for item in ${pkgname[@]}
 			do 
-				if [ ! -d "$_target_dir/packages/$item" ]
-	       			then 
-					ln -s "$_target_dir/packages/$package" "$_target_dir/packages/$item" 
+				item="$(echo $item | rev | cut -d'/' -f2 | rev)"
+				if [[ $package != *repos* ]]
+				then
+					package=$(echo $package | rev | cut -d'/' -f3 | rev)
+					if [ ! -d "$_target_dir/packages/$item" ] 
+	       				then 
+						ln -s "$_target_dir/packages/$package" "$_target_dir/packages/$item" 
+					fi
 				fi
        			done
 		done
