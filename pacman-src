@@ -127,6 +127,7 @@ function _start_build () {
 						exit 1
 					fi
 				fi
+				return
 			else
 				echo -e "\n${_color_red}==> Build failed!${_color_reset}\n"
 				exit 1
