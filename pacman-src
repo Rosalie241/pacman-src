@@ -159,7 +159,7 @@ do
 			echo "$0 [--noconfirm|-n]		| No confirmation				"
 			echo "$0 [--testing|-t]		| Builds the latest version			"
 			;;
-		*) _packages+="$item"
+		*) _packages+="$item "
 	esac
 done
 _update_cache
