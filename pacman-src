@@ -41,7 +41,8 @@ function _update_cache() {
 		do
 			cd "$_target_dir/packages/$repo" || exit 1
 			echo -e "\\n==> Updating $repo repo\\n"
-			git pull origin $_git_flags
+			git fetch --all $_git_flags
+			git reset --hard
 		done
 	fi
 }
