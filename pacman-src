@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+if [ ! "$XDG_CACHE_HOME" ]; then
+	XDG_CACHE_HOME="$HOME/.cache"
+fi
+_target_dir="$XDG_CACHE_HOME/pacman-src"
+_update=no
+_build_only=no
+_makepkg_flags="-sci"
+# clone the package repo to init the cache
+#
+function _init_cache() {
+	if [ ! -d "$_target_dir" ] && \
+		[ ! -d "$_target_dir/packages" ]
+	then
+		mkdir -p "$_target_dir"
+		echo -e "\n==> Cloning packages repo\n"
+		git clone git://git.archlinux.org/svntogit/packages.git --depth=1 "$_target_dir/packages"
+	fi
+}
+# Update the cache
+#
+function _update_cache() {
+	if [ "$_update" = "yes" ]
+	then
+		cd "$_target_dir/packages"
+		echo -e "\n==> Updating packages repo\n"
+		git pull origin
+	fi
+}
+# Start the build using makepkg
+#
+function _start_build () {
+	if [ -d  "$_target_dir/packages/$1" ]
+	then
+		cd "$_target_dir/packages/$1/trunk"
+		makepkg $_makepkg_flags
+		if [ "$_build_only" = "yes" ]
+		then
+			if [ ! -d "$_target_dir/build" ]
+			then
+				mkdir -p "$_target_dir/build"
+			fi
+			cp *.pkg.* "$_target_dir/build/"
+		fi
+	else
+		echo -e "\n==> Invalid package!\n"
+		exit 1
+	fi
+}
+_init_cache
+for item in $@	
+do
+	case $item in
+		--build |-b)  _makepkg_flags="-sc"; _build_only=yes;;
+		--update|-u)  _update=yes	  ;;
+		--help  |-h) 
+			echo "$0 [package]		| Builds and installs the package"
+			echo "$0 [--update/-u]	| Updates the cache		 "
+			echo "$0 [--build/-b]	| Build-only, no installing	 "
+			;;
+		*) _packages+="$item"
+	esac
+done
+for package in $_packages
+do
+	echo -e "\n==> Building $package\n"
+	_start_build "$package"
+done
