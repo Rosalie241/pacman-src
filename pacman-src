@@ -15,6 +15,7 @@ _update=no
 _build_only=no
 _repo_testing=no
 _makepkg_flags="-sc"
+_git_flags="--depth=1"
 _repos="core community"
 _stable_repos="core community extra multilib"
 _testing_repos="testing community-testing multilib-testing"
@@ -26,9 +27,9 @@ function _init_cache() {
 		[ ! -d "$_target_dir/packages" ]
 	then
 		mkdir -p "$_target_dir"
-		echo -e "\n==> Cloning packages repos\n"
-		git clone git://git.archlinux.org/svntogit/packages.git --depth=1 "$_target_dir/packages/core"
-		git clone git://git.archlinux.org/svntogit/community.git --depth=1 "$_target_dir/packages/community"
+		echo -e "\\n==> Cloning packages repos\\n"
+		git clone git://git.archlinux.org/svntogit/packages.git  $_git_flags "$_target_dir/packages/core"
+		git clone git://git.archlinux.org/svntogit/community.git $_git_flags "$_target_dir/packages/community"
 	fi
 }
 # Update the cache
@@ -38,39 +39,40 @@ function _update_cache() {
 	then
 		for repo in $_repos
 		do
-			cd "$_target_dir/packages/$repo"
-			echo -e "\n==> Updating packages $repo repo\n"
-			git pull origin
+			cd "$_target_dir/packages/$repo" || exit 1
+			echo -e "\\n==> Updating $repo repo\\n"
+			git pull origin $_git_flags
 		done
 	fi
 }
-#
 # Update symlinks
+#
 function _update_symlinks() {
 	if [ "$_update" = "yes" ]
 	then
-		echo -e "\n==> Updating symlinks\n"
-		for repo in $_repos
+		echo -e "\\n==> Updating symlinks\\n"
+		for _repo in $_repos
 		do
-			for package in $(find "$_target_dir/packages/$repo" -name "PKGBUILD" 2> /dev/null) 
-			do 
-				source $package 2>/dev/null 
-				for item in ${pkgname[@]}
+			_target_repo_dir="$_target_dir/packages/$_repo"
+			find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
+			do
+				source "$_package" 2>/dev/null 
+				for _item in ${pkgname[@]}
 				do 
-					item="$(echo $item | rev | cut -d'/' -f2 | rev)"
-					if [[ $package != *repos* ]]
+					if [[ $_package != *repos* ]]
 					then
-						package=$(echo $package | rev | cut -d'/' -f3 | rev)
-						if [ ! -d "$_target_dir/packages/$repo/$item" ] && \
-							[ ! -f "$_target_dir/packages/$repo/$package" ]
-	       					then
-							_source="$_target_dir/packages/$repo/$package"
-							_target="$_target_dir/packages/$repo/$item"
+						_item="$(echo    "$_item" 	 | rev | cut -d'/' -f2 | rev)"
+						_package="$(echo "$_package" | rev | cut -d'/' -f3 | rev)"
+						_source="$_target_repo_dir/$_package"
+						_target="$_target_repo_dir/$_item"
+						if [ ! -d "$_target" ] && \
+							[ ! -f "$_source" ] 
+	       				then
 							echo -e "> Linking ${_color_yel}$_source${_color_reset} to ${_color_blue}$_target${_color_reset}"
 							ln -s "$_source" "$_target"
 						fi
 					fi
-       				done
+       			done
 			done
 		done
 	fi
@@ -82,16 +84,17 @@ function _build_cd () {
 		for _repo in $@
 			do
 			_target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$repo-$arch"
-			if [ -d "$_target_build_dir" ]; then
+			if [ -d "$_target_build_dir" ]
+			then
 				_found_dir=true
-				cd "$_target_build_dir"
+				cd "$_target_build_dir" || exit 1
 			fi
 		done
 	done
 	if [ "$_found_dir" = "false" ]
 	then
-		echo -e "=> ${_color_yel}$_pkgname${_color_reset} not found in $_repo_version repos, building latest..\n"
-		cd "$_target_dir/packages/$repo/$_pkgname/trunk"
+		echo -e "=> ${_color_yel}$_pkgname${_color_reset} not found in $_repo_version repos, building latest..\\n"
+		cd "$_target_dir/packages/$repo/$_pkgname/trunk" || exit 1
 	fi
 }
 # Start the build using makepkg
@@ -103,69 +106,75 @@ function _start_build () {
 		if [ -d  "$_target_dir/packages/$repo/$_pkgname" ]
 		then
 			_pkg_not_found=no
-			if [ "$_repo_testing" = "yes" ]; then
+			if [ "$_repo_testing" = "yes" ]
+			then
 				_repo_version="testing"
-				_build_cd $_testing_repos
+				_build_cd "$_testing_repos"
 			else
 				_repo_version="stable"
-				_build_cd $_stable_repos
+				_build_cd "$_stable_repos"
 			fi
 			if makepkg $_makepkg_flags
 			then
+				_target_build_dir="$_target_dir/build"
 				if [ "$_build_only" = "yes" ]
 				then
-					if [ ! -d "$_target_dir/build" ]
+					if [ ! -d "$_target_build_dir" ]
 					then
-						mkdir -p "$_target_dir/build"
+						mkdir -p "$_target_build_dir"
 					fi
-					cp *.pkg.* "$_target_dir/build/"
+					cp ./*.pkg.* "$_target_build_dir"
 				else
-					echo -e "\n==> Installing $1\n"
+					echo -e "\\n==> Installing $1\\n"
 					if ! makepkg -i
 					then
-						echo -e "\n${_color_red}==> Installing $1 failed!${_color_reset}"
+						echo -e "\\n${_color_red}==> Installing $1 failed!${_color_reset}"
 						exit 1
 					fi
 				fi
 				return
 			else
-				echo -e "\n${_color_red}==> Build failed!${_color_reset}\n"
+				echo -e "\\n${_color_red}==> Build failed!${_color_reset}\\n"
 				exit 1
 			fi
 		else
 			_pkg_not_found=yes
 		fi
 	done
-	if [ "$_pkg_not_found" = "yes" ]; then
-		echo -e "\n${_color_red}==> $1 not found!${_color_reset}\n"
+	if [ "$_pkg_not_found" = "yes" ]
+	then
+		echo -e "\\n${_color_red}==> $1 not found!${_color_reset}\\n"
 	fi
+}
+# Displays usage
+#
+function _usage () {
+	echo "$0 [package]			| Builds and installs the package	"
+	echo "$0 [--update|-u]		| Updates the cache		 			"
+	echo "$0 [--build|-b]		| Build-only, no installing	 		"
+	echo "$0 [--force|-f]		| Force overwrite built package		"
+	echo "$0 [--skipchecks|-s]		| Skips any integrity check		"
+	echo "$0 [--noconfirm|-n]		| No confirmation				"
+	echo "$0 [--testing|-t]		| Builds the latest version			"
 }
 _init_cache
 for item in $@	
 do
 	case $item in
-		--build |-b) _build_only=yes;;
-		--update|-u) _update=yes;;
-		--skipchecks|-s) _makepkg_flags+=" --skipinteg";;
-		--noconfirm|-n) _makepkg_flags+=" --noconfirm";;
-		--testing|-t) _repo_testing="yes";;
-		--force|-f) _makepkg_flags+=" -f";;
-		--help  |-h) 
-			echo "$0 [package]			| Builds and installs the package	"
-			echo "$0 [--update|-u]		| Updates the cache		 			"
-			echo "$0 [--build|-b]		| Build-only, no installing	 		"
-			echo "$0 [--force|-f		| Force overwrite built package		"
-			echo "$0 [--skipchecks|-s]		| Skips any integrity check		"
-			echo "$0 [--noconfirm|-n]		| No confirmation				"
-			echo "$0 [--testing|-t]		| Builds the latest version			"
-			;;
+		--build 		|-b) _build_only=yes;;
+		--update		|-u) _update=yes;;
+		--skipchecks	|-s) _makepkg_flags+=" --skipinteg";;
+		--noconfirm		|-n) _makepkg_flags+=" --noconfirm";;
+		--testing		|-t) _repo_testing="yes";;
+		--force			|-f) _makepkg_flags+=" -f";;
+		--help   |-h|--*|-*) _usage; exit;;
 		*) _packages+="$item "
 	esac
 done
 _update_cache
 _update_symlinks
-for package in $_packages
+for _package in $_packages
 do
-	echo -e "\n==> Building ${_color_blue}$package${_color_reset}\n"
-	_start_build "$package"
+	echo -e "\\n==> Building ${_color_blue}$_package${_color_reset}\\n"
+	_start_build "$_package"
 done
