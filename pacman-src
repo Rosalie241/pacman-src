@@ -29,6 +29,25 @@ function _update_cache() {
 		git pull origin
 	fi
 }
+#
+# Update symlinks
+function _update_symlinks() {
+	if [ "$_update" = "yes" ]
+	then
+		echo -e "\n==> Updating symlinks\n"
+		for package in $(find "$_target_dir/packages/" -name "PKGBUILD" 2> /dev/null) 
+		do 
+			source $package 2>/dev/null 
+			for item in ${pkgname[@]}
+			do 
+				if [ ! -d "$_target_dir/packages/$item" ]
+	       			then 
+					ln -s "$_target_dir/packages/$package" "$_target_dir/packages/$item" 
+				fi
+       			done
+		done
+	fi
+}
 # Start the build using makepkg
 #
 function _start_build () {
@@ -80,6 +99,8 @@ do
 		*) _packages+="$item"
 	esac
 done
+_update_cache
+_update_symlinks
 for package in $_packages
 do
 	echo -e "\n==> Building $package\n"
