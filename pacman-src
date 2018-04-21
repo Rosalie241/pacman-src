@@ -206,26 +206,27 @@ function _start_build() {
         _cached_found=no
         return
     fi
+     _target_build_dir="$_target_dir/build/"
+    if [ "$_build_only" = "yes" ] || \
+        [ "$_cache" = "yes" ]
+    then
+        if [ ! -d "$_target_build_dir" ]
+        then
+            mkdir -p "$_target_build_dir"
+        fi
+        _makepkg_flags+=" PKGDEST=""$_target_build_dir"""
+    fi
     if makepkg $_makepkg_flags
     then
         _target_build_dir="$_target_dir/build"
         if [ "$_build_only" = "no" ]
         then
             _wprint "Installing ${_color_blue}$1"
-            if ! makepkg $_install_makepkg_flags
+            if ! sudo pacman $_pacman_flags -U $1-*.pkg*
             then
                 _errprint "Installing ${_color_blue}$1 ${_color_white}failed!"
                 exit 1
             fi
-        fi
-        if [ "$_build_only" = "yes" ] || \
-            [ "$_cache" = "yes" ]
-        then
-            if [ ! -d "$_target_build_dir" ]
-            then
-                mkdir -p "$_target_build_dir"
-            fi
-            cp ./*.pkg.* "$_target_build_dir"
         fi
         if [ "$_clean" = "yes" ]
         then
@@ -310,12 +311,11 @@ function _parse_short() {
                 u) _update=yes;;
                 k) _small_update=yes; _update=yes;;
                 s) _makepkg_flags+=" --skipinteg";;
-                n) _makepkg_flags+=" --noconfirm"; _install_makepkg_flags+=" --noconfirm"
-                        _pacman_flags+=" --noconfirm";;
+                n) _makepkg_flags+=" --noconfirm"; _pacman_flags+=" --noconfirm";;
                 c) _makepkg_flags+=" --cleanbuild";;
                 t) _repo_testing=yes;;
                 d) _clean=no;;
-                f) _makepkg_flags+=" -f";;
+                f) _makepkg_flags+=" -f"; _pacman_flags+=" --force";;
                 l) _makepkg_flags+=" --nocheck";;
                 m) _cache=yes;;
                 h|*) _usage; exit;;
@@ -338,13 +338,12 @@ do
         --update)       _update=yes;;
         --supdate)      _small_update=yes; _update=yes;;
         --skipchecks)   _makepkg_flags+=" --skipinteg";;
-        --noconfirm)    _makepkg_flags+=" --noconfiirm"; _install_makepkg_flags+=" --noconfirm"
-                            _pacman_flags+=" --noconfirm";;
+        --noconfirm)    _makepkg_flags+=" --noconfiirm"; _pacman_flags+=" --noconfirm";;
         --cleanbuild)   _makepkg_flags+=" --cleanbuild";;
         --nocheck)      _makepkg_flags+=" --nocheck";;
         --testing)      _repo_testing=yes;;
         --dirty)        _clean=no;;
-        --force )       _makepkg_flags+=" -f";;
+        --force )       _makepkg_flags+=" -f"; _pacman_flags+=" --force";;
         --cache)        _cache=yes;;
         --help|--*)     _usage; exit;;
         -*)             _parse_short "$item" ;;
