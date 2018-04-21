@@ -74,7 +74,7 @@ function _update_cache() {
 		for repo in $_repos
 		do
 			cd "$_target_dir/packages/$repo" || exit 1
-			_sprint "updating ${_color_blue}$repo${_color_reset} repo"
+			_sprint "updating ${_color_blue}$repo ${_color_white}repo"
 			git fetch --all $_git_flags 	> /dev/null
 			git reset --hard				> /dev/null
 		done
@@ -130,7 +130,7 @@ function _build_cd () {
 	done
 	if [ "$_found_dir" = "false" ]
 	then
-		_warnprint "${_color_blue}$_pkgname${_color_reset} ${_color_white}not found in the${_color_reset} ${_color_blue}$_repo_version${_color_reset} ${_color_white}repos, building latest..${_color_reset}"
+		_warnprint "${_color_blue}$_pkgname ${_color_white}not found in the ${_color_blue}$_repo_version ${_color_white}repos, building latest.."
 		cd "$_target_dir/packages/$repo/$_pkgname/trunk" || exit 1
 	fi
 }
@@ -177,16 +177,16 @@ function _start_build() {
 			fi
 			cp ./*.pkg.* "$_target_build_dir"
 		else
-			_wprint "Installing ${_color_blue}$1${_color_reset}"
+			_wprint "Installing ${_color_blue}$1"
 			if ! makepkg -i
 			then
-				_errprint "Installing ${_color_blue}$1${_color_reset} failed!"
+				_errprint "Installing ${_color_blue}$1 ${_color_white}failed!"
 				exit 1
 			fi
 		fi
 		return
 	else
-		_errprint "Building ${_color_blue}$1${_color_reset} failed!"
+		_errprint "Building ${_color_blue}$1 ${_color_white}failed!"
 		exit 1
 	fi
 }
@@ -219,7 +219,7 @@ _update_cache
 _update_symlinks
 for _package in $_packages
 do
-	_wprint "Searching ${_color_blue}$_package${_color_reset}"
+	_wprint "Searching ${_color_blue}$_package"
 	_start_search "$_package"
 	_start_build  "$_package"
 done
