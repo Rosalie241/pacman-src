@@ -150,12 +150,13 @@ function _update_symlinks() {
     fi
 }
 function _build_cd () {
+    # note: '$repo' is from _start_search
     _found_dir=false
     for arch in $_repo_archs
     do
         for _repo in $@
-            do
-            _target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$_repo-$arch"
+        do
+            _target_build_dir="$_target_dir/packages/$repo/$_pkgname/repos/$_repo-$arch"
             if [ -d "$_target_build_dir" ]
             then
                 _found_dir=true
