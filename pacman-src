@@ -277,6 +277,7 @@ function _check_cache() {
         if ! sudo pacman $_pacman_flags -U "$_target_dir/build/"$1-$pkgver*
         then
             _errprint "Failed to install ${_color_blue}$1"
+            exit 1
         fi
     fi
 }
