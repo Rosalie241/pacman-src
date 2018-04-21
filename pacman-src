@@ -267,6 +267,11 @@ function _parse_short() {
 }
 _checkreq
 _init_cache
+if [ ! "$@" ]
+then
+    _usage
+    exit
+fi
 for item in $@
 do
     case $item in
@@ -295,9 +300,6 @@ fi
 if [ "$_packages" ]
 then  
     _wprint "Searching packages"
-else
-    _usage
-    exit
 fi
 for _package in $_packages
 do
