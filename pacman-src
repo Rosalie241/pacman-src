@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 if [ ! "$XDG_CACHE_HOME" ]
 then
-	XDG_CACHE_HOME="$HOME/.cache"
+    XDG_CACHE_HOME="$HOME/.cache"
 fi
 # Declare colors
 #
@@ -30,275 +30,275 @@ _small_update=no
 # Print text
 #
 function _print() {
-	if [ "$_quiet" = "no" ]
-	then
-		if [ "$_newline" = "yes" ]
-		then
-			echo -e "\\n$*\\n"
-		else
-			echo -e "$*"
-		fi
-	fi
-	return
+    if [ "$_quiet" = "no" ]
+    then
+        if [ "$_newline" = "yes" ]
+        then
+            echo -e "\\n$*\\n"
+        else
+            echo -e "$*"
+        fi
+    fi
+    return
 }
 # Print white text
 function _wprint() {
-	_print "${_color_green}=>>${_color_reset} ${_color_white}$* ${_color_reset}"
+    _print "${_color_green}=>>${_color_reset} ${_color_white}$* ${_color_reset}"
 }
 # Print red error text
 function _errprint() {
-	_print "${_color_red}=>> ERROR:${_color_reset} ${_color_white}$*${_color_reset}"
+    _print "${_color_red}=>> ERROR:${_color_reset} ${_color_white}$*${_color_reset}"
 }
 # Print yellow warning text
 function _warnprint() {
-	_print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$*${_color_reset}"
+    _print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$*${_color_reset}"
 }
 # Print sub info
 function _sprint() {
-	_newline=no
-	_print "  ${_color_blue}->${_color_white} $*${_color_reset}"
-	_newline=yes
+    _newline=no
+    _print "  ${_color_blue}->${_color_white} $*${_color_reset}"
+    _newline=yes
 }
 # clone the package repo to init the cache
 #
 function _init_cache() {
-	if [ ! -d "$_target_dir" ] || \
-		[ ! -d "$_target_dir/packages" ] || \
-		[ ! -d "$_target_dir/packages/core" ] || \
-		[ ! -d "$_target_dir/packages/community" ]
-	then
-		mkdir -p "$_target_dir"
-		_wprint "Cloning packages repos"
-		git clone git://git.archlinux.org/svntogit/packages.git  $_git_flags "$_target_dir/packages/core"
-		git clone git://git.archlinux.org/svntogit/community.git $_git_flags "$_target_dir/packages/community"
-	fi
+    if [ ! -d "$_target_dir" ] || \
+        [ ! -d "$_target_dir/packages" ] || \
+        [ ! -d "$_target_dir/packages/core" ] || \
+        [ ! -d "$_target_dir/packages/community" ]
+    then
+        mkdir -p "$_target_dir"
+        _wprint "Cloning packages repos"
+        git clone git://git.archlinux.org/svntogit/packages.git  $_git_flags "$_target_dir/packages/core"
+        git clone git://git.archlinux.org/svntogit/community.git $_git_flags "$_target_dir/packages/community"
+    fi
 }
 # Update the cache
 #
 function _update_cache() {
-	if [ "$_update" = "yes" ]
-	then
-		_wprint "Updating repos"
-		for repo in $_repos
-		do
-			cd "$_target_dir/packages/$repo" || exit 1
-			_sprint "updating ${_color_blue}$repo ${_color_white}repo"
-			git fetch --all $_git_flags 	> /dev/null
-			git reset --hard				> /dev/null
-		done
-	fi
+    if [ "$_update" = "yes" ]
+    then
+        _wprint "Updating repos"
+        for repo in $_repos
+        do
+            cd "$_target_dir/packages/$repo" || exit 1
+            _sprint "updating ${_color_blue}$repo ${_color_white}repo"
+            git fetch --all $_git_flags     > /dev/null
+            git reset --hard                > /dev/null
+        done
+    fi
 }
 # Update symlinks
 #
 function _update_symlinks() {
-	if [ "$_update" = "yes" ]
-	then
-		_wprint "Updating symlinks"
-		for _repo in $_repos
-		do
-			_target_repo_dir="$_target_dir/packages/$_repo"
-			find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
-			do
-				source "$_package" 2>/dev/null 
-				for _item in ${pkgname[@]}
-				do 
-					if [[ $_package != *repos* ]]
-					then
-						_item="$(echo    "$_item" 	 | rev | cut -d'/' -f2 | rev)"
-						_package="$(echo "$_package" | rev | cut -d'/' -f3 | rev)"
-						_source="$_target_repo_dir/$_package"
-						_target="$_target_repo_dir/$_item"
-						if [ ! -d "$_target" ] && \
-							[ ! -f "$_source" ] 
-	       				then
-							_newline=no
-							_sprint "${_color_white}Linking ${_color_yel}$_source ${_color_white}to ${_color_blue}$_target"
-							_newline=yes
-							ln -s "$_source" "$_target"
-						fi
-					fi
-       			done
-			done
-		done
-	fi
+    if [ "$_update" = "yes" ]
+    then
+        _wprint "Updating symlinks"
+        for _repo in $_repos
+        do
+            _target_repo_dir="$_target_dir/packages/$_repo"
+            find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
+            do
+                source "$_package" 2>/dev/null 
+                for _item in ${pkgname[@]}
+                do 
+                    if [[ $_package != *repos* ]]
+                    then
+                        _item="$(echo    "$_item"    | rev | cut -d'/' -f2 | rev)"
+                        _package="$(echo "$_package" | rev | cut -d'/' -f3 | rev)"
+                        _source="$_target_repo_dir/$_package"
+                        _target="$_target_repo_dir/$_item"
+                        if [ ! -d "$_target" ] && \
+                            [ ! -f "$_source" ] 
+                        then
+                            _newline=no
+                            _sprint "${_color_white}Linking ${_color_yel}$_source ${_color_white}to ${_color_blue}$_target"
+                            _newline=yes
+                            ln -s "$_source" "$_target"
+                        fi
+                    fi
+                done
+            done
+        done
+    fi
 }
 function _build_cd () {
-	_found_dir=false
-	for arch in $_repo_archs
-	do
-		for _repo in $@
-			do
-			_target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$repo-$arch"
-			if [ -d "$_target_build_dir" ]
-			then
-				_found_dir=true
-				cd "$_target_build_dir" || exit 1
-			fi
-		done
-	done
-	if [ "$_found_dir" = "false" ]
-	then
-		_warnprint "${_color_blue}$_pkgname ${_color_white}not found in the ${_color_blue}$_repo_version ${_color_white}repos, building latest.."
-		cd "$_target_dir/packages/$repo/$_pkgname/trunk" || exit 1
-	fi
+    _found_dir=false
+    for arch in $_repo_archs
+    do
+        for _repo in $@
+            do
+            _target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$repo-$arch"
+            if [ -d "$_target_build_dir" ]
+            then
+                _found_dir=true
+                cd "$_target_build_dir" || exit 1
+            fi
+        done
+    done
+    if [ "$_found_dir" = "false" ]
+    then
+        _warnprint "${_color_blue}$_pkgname ${_color_white}not found in the ${_color_blue}$_repo_version ${_color_white}repos, building latest.."
+        cd "$_target_dir/packages/$repo/$_pkgname/trunk" || exit 1
+    fi
 }
 # Search the package
 #
 function _start_search() {
-	for repo in $_repos
-	do
-		_pkgname=$1
-		if [ -d "$_target_dir/packages/$repo/$_pkgname" ]
-		then
-			_pkg_not_found=no
-			if [ "$_repo_testing" = "yes" ]
-			then
-				_repo_version="testing"
-				_build_cd "$_testing_repos"
-			else
-				_repo_version="stable"
-				_build_cd "$_stable_repos"
-			fi
-			return
-		else
-			_pkg_not_found=yes
-		fi
-	done
-	if [ "$_pkg_not_found" = "yes" ]
-	then
-		_errprint "${_color_blue}$1${_color_white} not found!"
-		exit 1
-	fi
+    for repo in $_repos
+    do
+        _pkgname=$1
+        if [ -d "$_target_dir/packages/$repo/$_pkgname" ]
+        then
+            _pkg_not_found=no
+            if [ "$_repo_testing" = "yes" ]
+            then
+                _repo_version="testing"
+                _build_cd "$_testing_repos"
+            else
+                _repo_version="stable"
+                _build_cd "$_stable_repos"
+            fi
+            return
+        else
+            _pkg_not_found=yes
+        fi
+    done
+    if [ "$_pkg_not_found" = "yes" ]
+    then
+        _errprint "${_color_blue}$1${_color_white} not found!"
+        exit 1
+    fi
 }
 # Start the build using makepkg
 #
 function _start_build() {
-	if makepkg $_makepkg_flags
-	then
-		_target_build_dir="$_target_dir/build"
-		if [ "$_build_only" = "yes" ]
-		then
-			if [ ! -d "$_target_build_dir" ]
-			then
-				mkdir -p "$_target_build_dir"
-			fi
-			cp ./*.pkg.* "$_target_build_dir"
-		else
-			_wprint "Installing ${_color_blue}$1"
-			if ! makepkg -i
-			then
-				_errprint "Installing ${_color_blue}$1 ${_color_white}failed!"
-				exit 1
-			fi
-		fi
-		return
-	else
-		_errprint "Building ${_color_blue}$1 ${_color_white}failed!"
-		exit 1
-	fi
+    if makepkg $_makepkg_flags
+    then
+        _target_build_dir="$_target_dir/build"
+        if [ "$_build_only" = "yes" ]
+        then
+            if [ ! -d "$_target_build_dir" ]
+            then
+                mkdir -p "$_target_build_dir"
+            fi
+            cp ./*.pkg.* "$_target_build_dir"
+        else
+            _wprint "Installing ${_color_blue}$1"
+            if ! makepkg -i
+            then
+                _errprint "Installing ${_color_blue}$1 ${_color_white}failed!"
+                exit 1
+            fi
+        fi
+        return
+    else
+        _errprint "Building ${_color_blue}$1 ${_color_white}failed!"
+        exit 1
+    fi
 }
 # Checks requirements
 #
 function _checkreq() {
-	_missing_req=no
-	for _cmd in git pacman bash makepkg ln
-	do
-		if ! command -v $_cmd > /dev/null 2>/dev/null
-		then
-			_errprint "Missing requirement: ${_color_blue}$_cmd"
-			_missing_req=yes
-		fi
-	done
-	if [ "$_missing_req" = "yes" ]
-	then
-		exit 1
-	fi
-	
-	if [ -f "/etc/os-release" ]
-	then
-		ID=NULL
-		export "$(grep ID /etc/os-release | head -1)" 2>/dev/null
-		if [ "$ID" != "arch" ]
-		then
-			_warnprint "Unsupported platform detected, continue at your own risk"
-		fi
-		unset ID
-	fi
+    _missing_req=no
+    for _cmd in git pacman bash makepkg ln
+    do
+        if ! command -v $_cmd > /dev/null 2>/dev/null
+        then
+            _errprint "Missing requirement: ${_color_blue}$_cmd"
+            _missing_req=yes
+        fi
+    done
+    if [ "$_missing_req" = "yes" ]
+    then
+        exit 1
+    fi
+    
+    if [ -f "/etc/os-release" ]
+    then
+        ID=NULL
+        export "$(grep ID /etc/os-release | head -1)" 2>/dev/null
+        if [ "$ID" != "arch" ]
+        then
+            _warnprint "Unsupported platform detected, continue at your own risk"
+        fi
+        unset ID
+    fi
 }
 # Displays usage
 #
 function _usage() {
-	echo "$0 [package]			| Builds and installs the package	"
-	echo "$0 [--update|-u]		| Updates the cache		 			"
-	echo "$0 [--build|-b]		| Build-only, no installing	 		"
-	echo "$0 [--force|-f]		| Force overwrite built package		"
-	echo "$0 [--skipchecks|-s]		| Skips any integrity check		"
-	echo "$0 [--noconfirm|-n]		| No confirmation				"
-	echo "$0 [--testing|-t]		| Builds the latest version			"
-	echo "$0 [--quiet|-q]		| silent mode						"
-	echo "$0 [--search|-Q]		| Searches the given package, returns 0 if found"
-	echo "$0 [--supdate-k]		| Updates the cache without linking"
-	echo "$0 [--nocheck]|-l]	| skips do_check function from PKGBUILD"
+    echo "$0 [package]          | Builds and installs the package   "
+    echo "$0 [--update|-u]      | Updates the cache                 "
+    echo "$0 [--build|-b]       | Build-only, no installing         "
+    echo "$0 [--force|-f]       | Force overwrite built package     "
+    echo "$0 [--skipchecks|-s]  | Skips any integrity check         "
+    echo "$0 [--noconfirm|-n]   | No confirmation                   "
+    echo "$0 [--testing|-t]     | Builds the latest version         "
+    echo "$0 [--quiet|-q]       | silent mode                       "
+    echo "$0 [--search|-Q]      | Searches the given package, returns 0 if found"
+    echo "$0 [--supdate-k]      | Updates the cache without linking"
+    echo "$0 [--nocheck]|-l]    | skips do_check function from PKGBUILD"
 }
 function _parse_short() {
-	args=$(echo "$@" | sed "s/-//g" | grep -o .)
-	for arg in $args
-	do
-		case $arg in
-    	        b) _build_only=yes;;
-    	        q) _quiet=yes;;
-    	        Q) _search_only=yes;;
-    	        u) _update=yes;;
-    	        k) _small_update=yes; _update=yes;;
-    	        s) _makepkg_flags+=" --skipinteg";;
-    	        n) _makepkg_flags+=" --noconfirm";;
-    	        t) _repo_testing=yes;;
-    	        f) _makepkg_flags+=" -f";;
-				l) _makepkg_flags+=" --nocheck";;
-    	        h) _usage; exit;;
-    	esac
-	done
+    args=$(echo "$@" | sed "s/-//g" | grep -o .)
+    for arg in $args
+    do
+        case $arg in
+                b) _build_only=yes;;
+                q) _quiet=yes;;
+                Q) _search_only=yes;;
+                u) _update=yes;;
+                k) _small_update=yes; _update=yes;;
+                s) _makepkg_flags+=" --skipinteg";;
+                n) _makepkg_flags+=" --noconfirm";;
+                t) _repo_testing=yes;;
+                f) _makepkg_flags+=" -f";;
+                l) _makepkg_flags+=" --nocheck";;
+                h) _usage; exit;;
+        esac
+    done
 }
 _checkreq
 _init_cache
 for item in $@
 do
     case $item in
-        --build) 		_build_only=yes;;
-        --quiet) 		_quiet=yes;;
-        --search) 		_search_only=yes;;
-        --update) 		_update=yes;;
-        --supdate) 		_small_update=yes; _update=yes;;
-        --skipchecks) 	_makepkg_flags+=" --skipinteg";;
-        --noconfirm) 	_makepkg_flags+=" --noconfirm";;
-		--nocheck) 		_makepkg_flags+=" --nocheck";;
-        --testing) 		_repo_testing="yes";;
-        --force ) 		_makepkg_flags+=" -f";;
-        --help|--*) 	_usage; exit;;
-        -*) 			_parse_short "$item" ;;
-        *) 				_packages+="$item ";;
+        --build)        _build_only=yes;;
+        --quiet)        _quiet=yes;;
+        --search)       _search_only=yes;;
+        --update)       _update=yes;;
+        --supdate)      _small_update=yes; _update=yes;;
+        --skipchecks)   _makepkg_flags+=" --skipinteg";;
+        --noconfirm)    _makepkg_flags+=" --noconfirm";;
+        --nocheck)      _makepkg_flags+=" --nocheck";;
+        --testing)      _repo_testing="yes";;
+        --force )       _makepkg_flags+=" -f";;
+        --help|--*)     _usage; exit;;
+        -*)             _parse_short "$item" ;;
+        *)              _packages+="$item ";;
     esac
 done
 _update_cache
 if [ "$_small_update" = "no" ]
 then
-	_update_symlinks
+    _update_symlinks
 fi
 # Search all packages before building
 if [ "$_packages" ]
-then	
-	_wprint "Searching packages"
+then    
+    _wprint "Searching packages"
 fi
 for _package in $_packages
 do
-	_sprint "searching ${_color_blue}$_package"
-	_start_search "$_package"
+    _sprint "searching ${_color_blue}$_package"
+    _start_search "$_package"
 done
 if [ "$_search_only" = "no" ]
 then
-	for _package in $_packages
-	do
-		_start_search "$_package"
-		_start_build "$_package"
-	done
+    for _package in $_packages
+    do
+        _start_search "$_package"
+        _start_build "$_package"
+    done
 fi
