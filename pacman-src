@@ -241,7 +241,7 @@ function _usage() {
 	echo "$0 [--supdate-k]		| Updates the cache without linking"
 }
 function _parse_short() {
-	args=$(echo $* | sed "s/-//g" | grep -o .)
+	args=$(echo "$@" | sed "s/-//g" | grep -o .)
 	for arg in $args
 	do
 		case $arg in
@@ -273,7 +273,7 @@ do
         --testing) _repo_testing="yes";;
         --force ) _makepkg_flags+=" -f";;
         --help|--*) _usage; exit;;
-        -*) _parse_short $item ;;
+        -*) _parse_short "$item" ;;
         *) _packages+="$item ";;
     esac
 done
