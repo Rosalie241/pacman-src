@@ -282,7 +282,10 @@ then
 	_update_symlinks
 fi
 # Search all packages before building
-_wprint "Searching packages"
+if [ "$_packages" ]
+then	
+	_wprint "Searching packages"
+fi
 for _package in $_packages
 do
 	_sprint "searching ${_color_blue}$_package"
