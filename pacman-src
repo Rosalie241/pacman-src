@@ -286,7 +286,7 @@ function _parse_short() {
 }
 _checkreq
 _init_cache
-if [ ! "$@" ]
+if [ "${#@}" = "0" ]
 then
     _usage
     exit
