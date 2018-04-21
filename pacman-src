@@ -155,7 +155,7 @@ function _build_cd () {
     do
         for _repo in $@
             do
-            _target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$repo-$arch"
+            _target_build_dir="$_target_dir/packages/$_repo/$_pkgname/repos/$_repo-$arch"
             if [ -d "$_target_build_dir" ]
             then
                 _found_dir=true
@@ -316,7 +316,7 @@ function _parse_short() {
                 f) _makepkg_flags+=" -f";;
                 l) _makepkg_flags+=" --nocheck";;
                 m) _cache=yes;;
-                h) _usage; exit;;
+                h|*) _usage; exit;;
         esac
     done
 }
