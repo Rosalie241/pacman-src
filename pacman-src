@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-if [ ! "$XDG_CACHE_HOME" ]; then
+if [ ! "$XDG_CACHE_HOME" ]
+then
 	XDG_CACHE_HOME="$HOME/.cache"
 fi
 # Declare colors
@@ -28,27 +29,27 @@ _newline=yes
 function _print() {
 	if [ "$_newline" = "yes" ]
 	then
-		echo -e "\\n$@\\n"
+		echo -e "\\n$*\\n"
 	else
-		echo -e "$@"
+		echo -e "$*"
 	fi
 }
 # Print white text
 function _wprint() {
-	_print "${_color_green}=>>${_color_reset} ${_color_white}$@ ${_color_reset}"
+	_print "${_color_green}=>>${_color_reset} ${_color_white}$* ${_color_reset}"
 }
 # Print red error text
 function _errprint() {
-	_print "${_color_red}=>> ERROR:${_color_reset} ${_color_white}$@${_color_reset}"
+	_print "${_color_red}=>> ERROR:${_color_reset} ${_color_white}$*${_color_reset}"
 }
 # Print yellow warning text
 function _warnprint() {
-	_print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$@${_color_reset}"
+	_print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$*${_color_reset}"
 }
 # Print sub info
 function _sprint() {
 	_newline=no
-	_print "  ${_color_blue}->${_color_white} $@${_color_reset}"
+	_print "  ${_color_blue}->${_color_white} $*${_color_reset}"
 	_newline=yes
 }
 # clone the package repo to init the cache
@@ -190,9 +191,37 @@ function _start_build() {
 		exit 1
 	fi
 }
+# Checks requirements
+#
+function _checkreq() {
+	_missing_req=no
+	for _cmd in git pacman bash makepkg ln
+	do
+		if ! command -v $_cmd > /dev/null 2>/dev/null
+		then
+			_errprint "Missing requirement: ${_color_blue}$_cmd"
+			_missing_req=yes
+		fi
+	done
+	if [ "$_missing_req" = "yes" ]
+	then
+		exit 1
+	fi
+	
+	if [ -f "/etc/os-release" ]
+	then
+		ID=NULL
+		export "$(grep ID /etc/os-release | head -1)" 2>/dev/null
+		if [ "$ID" != "arch" ]
+		then
+			_warnprint "Unsupported platform detected, continue at your own risk"
+		fi
+		unset ID
+	fi
+}
 # Displays usage
 #
-function _usage () {
+function _usage() {
 	echo "$0 [package]			| Builds and installs the package	"
 	echo "$0 [--update|-u]		| Updates the cache		 			"
 	echo "$0 [--build|-b]		| Build-only, no installing	 		"
@@ -201,6 +230,7 @@ function _usage () {
 	echo "$0 [--noconfirm|-n]		| No confirmation				"
 	echo "$0 [--testing|-t]		| Builds the latest version			"
 }
+_checkreq
 _init_cache
 for item in $@	
 do
