@@ -27,6 +27,7 @@ _newline=yes
 _quiet=no
 _search_only=no
 _small_update=no
+_nowarn=no
 # Print text
 #
 function _print() {
@@ -51,7 +52,10 @@ function _errprint() {
 }
 # Print yellow warning text
 function _warnprint() {
-    _print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$*${_color_reset}"
+    if [ "$_nowarn" = "no" ]
+    then
+        _print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$*${_color_reset}"
+    fi
 }
 # Print sub info
 function _sprint() {
@@ -289,7 +293,7 @@ then
 fi
 # Search all packages before building
 if [ "$_packages" ]
-then    
+then  
     _wprint "Searching packages"
 else
     _usage
@@ -297,8 +301,10 @@ else
 fi
 for _package in $_packages
 do
+    _nowarn=yes
     _sprint "searching ${_color_blue}$_package"
     _start_search "$_package"
+    _nowarn=no
 done
 if [ "$_search_only" = "no" ]
 then
