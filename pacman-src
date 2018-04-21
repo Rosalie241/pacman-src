@@ -239,6 +239,7 @@ function _usage() {
     echo "$0 [--search|-Q]      | Searches the given package, returns 0 if found"
     echo "$0 [--supdate-k]      | Updates the cache without linking"
     echo "$0 [--nocheck]|-l]    | skips do_check function from PKGBUILD"
+    echo "$0 [--cleanbuild|-c]  | cleans build before building the package"
 }
 function _parse_short() {
     args=$(echo "$@" | sed "s/-//g" | grep -o .)
@@ -252,6 +253,7 @@ function _parse_short() {
                 k) _small_update=yes; _update=yes;;
                 s) _makepkg_flags+=" --skipinteg";;
                 n) _makepkg_flags+=" --noconfirm";;
+                c) _makepkg_flags+=" --cleanbuild";;
                 t) _repo_testing=yes;;
                 f) _makepkg_flags+=" -f";;
                 l) _makepkg_flags+=" --nocheck";;
@@ -271,6 +273,7 @@ do
         --supdate)      _small_update=yes; _update=yes;;
         --skipchecks)   _makepkg_flags+=" --skipinteg";;
         --noconfirm)    _makepkg_flags+=" --noconfirm";;
+        --cleanbuild)   _makepkg_flags+=" --cleanbuild";;
         --nocheck)      _makepkg_flags+=" --nocheck";;
         --testing)      _repo_testing="yes";;
         --force )       _makepkg_flags+=" -f";;
