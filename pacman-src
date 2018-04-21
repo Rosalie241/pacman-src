@@ -24,15 +24,21 @@ _stable_repos="core community extra multilib"
 _testing_repos="testing community-testing multilib-testing"
 _repo_archs="any x86_64"
 _newline=yes
+_quiet=no
+_search_only=no
 # Print text
 #
 function _print() {
-	if [ "$_newline" = "yes" ]
+	if [ "$_quiet" = "no" ]
 	then
-		echo -e "\\n$*\\n"
-	else
-		echo -e "$*"
+		if [ "$_newline" = "yes" ]
+		then
+			echo -e "\\n$*\\n"
+		else
+			echo -e "$*"
+		fi
 	fi
+	return
 }
 # Print white text
 function _wprint() {
@@ -229,6 +235,8 @@ function _usage() {
 	echo "$0 [--skipchecks|-s]		| Skips any integrity check		"
 	echo "$0 [--noconfirm|-n]		| No confirmation				"
 	echo "$0 [--testing|-t]		| Builds the latest version			"
+	echo "$0 [--quiet|-q]		| silent mode						"
+	echo "$0 [--search|-Q]		| Searches the given package, returns 0 if found"
 }
 _checkreq
 _init_cache
@@ -236,6 +244,8 @@ for item in $@
 do
 	case $item in
 		--build 		|-b) _build_only=yes;;
+		--quiet			|-q) _quiet=yes;;
+		--search		|-Q) _search_only=yes;;
 		--update		|-u) _update=yes;;
 		--skipchecks	|-s) _makepkg_flags+=" --skipinteg";;
 		--noconfirm		|-n) _makepkg_flags+=" --noconfirm";;
@@ -251,5 +261,8 @@ for _package in $_packages
 do
 	_wprint "Searching ${_color_blue}$_package"
 	_start_search "$_package"
-	_start_build  "$_package"
+	if [ "$_search_only" = "no" ]
+	then
+		_start_build  "$_package"
+	fi
 done
