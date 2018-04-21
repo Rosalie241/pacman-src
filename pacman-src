@@ -228,18 +228,18 @@ function _checkreq() {
 # Displays usage
 #
 function _usage() {
-    echo "$0 [package]          | Builds and installs the package   "
-    echo "$0 [--update|-u]      | Updates the cache                 "
-    echo "$0 [--build|-b]       | Build-only, no installing         "
-    echo "$0 [--force|-f]       | Force overwrite built package     "
-    echo "$0 [--skipchecks|-s]  | Skips any integrity check         "
-    echo "$0 [--noconfirm|-n]   | No confirmation                   "
-    echo "$0 [--testing|-t]     | Builds the latest version         "
-    echo "$0 [--quiet|-q]       | silent mode                       "
-    echo "$0 [--search|-Q]      | Searches the given package, returns 0 if found"
-    echo "$0 [--supdate-k]      | Updates the cache without linking"
-    echo "$0 [--nocheck]|-l]    | skips do_check function from PKGBUILD"
-    echo "$0 [--cleanbuild|-c]  | cleans build before building the package"
+    echo "$0 [package]            | Builds and installs the package   "
+    echo "$0 [--update    |  -u]  | Updates the cache                 "
+    echo "$0 [--build     |  -b]  | Build-only, no installing         "
+    echo "$0 [--force     |  -f]  | Force overwrite built package     "
+    echo "$0 [--skipchecks|  -s]  | Skips any integrity check         "
+    echo "$0 [--noconfirm |  -n]  | No confirmation                   "
+    echo "$0 [--testing   |  -t]  | Builds the latest version         "
+    echo "$0 [--quiet     |  -q]  | silent mode                       "
+    echo "$0 [--search    |  -Q]  | Searches the given package, returns 0 if found"
+    echo "$0 [--supdate   |  -k]  | Updates the cache without linking"
+    echo "$0 [--nocheck   |  -l]  | skips do_check function from PKGBUILD"
+    echo "$0 [--cleanbuild|  -c]  | cleans build before building the package"
 }
 function _parse_short() {
     args=$(echo "$@" | sed "s/-//g" | grep -o .)
@@ -291,6 +291,9 @@ fi
 if [ "$_packages" ]
 then    
     _wprint "Searching packages"
+else
+    _usage
+    exit
 fi
 for _package in $_packages
 do
