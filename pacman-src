@@ -35,8 +35,9 @@ _target_dir="$XDG_CACHE_HOME/pacman-src"
 _update=no
 _build_only=no
 _repo_testing=no
-_makepkg_flags="-sc"
+_makepkg_flags="-s"
 _git_flags="--depth=1"
+_install_makepkg_flags="-i"
 _repos="core community"
 _stable_repos="core community extra multilib"
 _testing_repos="testing community-testing multilib-testing"
@@ -46,6 +47,7 @@ _quiet=no
 _search_only=no
 _small_update=no
 _nowarn=no
+_clean=no
 # Print text
 #
 function _print() {
@@ -208,12 +210,14 @@ function _start_build() {
             cp ./*.pkg.* "$_target_build_dir"
         else
             _wprint "Installing ${_color_blue}$1"
-            if ! makepkg -i
+            if ! makepkg $_install_makepkg_flags
             then
                 _errprint "Installing ${_color_blue}$1 ${_color_white}failed!"
                 exit 1
             fi
         fi
+        _wprint "Cleaning ${_color_blue}$1"
+        git clean -fdxq
         return
     else
         _errprint "Building ${_color_blue}$1 ${_color_white}failed!"
@@ -275,7 +279,7 @@ function _parse_short() {
                 u) _update=yes;;
                 k) _small_update=yes; _update=yes;;
                 s) _makepkg_flags+=" --skipinteg";;
-                n) _makepkg_flags+=" --noconfirm";;
+                n) _makepkg_flags+=" --noconfirm"; _install_makepkg_flags+=" --noconfirm";;
                 c) _makepkg_flags+=" --cleanbuild";;
                 t) _repo_testing=yes;;
                 f) _makepkg_flags+=" -f";;
@@ -300,7 +304,7 @@ do
         --update)       _update=yes;;
         --supdate)      _small_update=yes; _update=yes;;
         --skipchecks)   _makepkg_flags+=" --skipinteg";;
-        --noconfirm)    _makepkg_flags+=" --noconfirm";;
+        --noconfirm)    _makepkg_flags+=" --noconfiirm"; _install_makepkg_flags+=" --noconfirm";;
         --cleanbuild)   _makepkg_flags+=" --cleanbuild";;
         --nocheck)      _makepkg_flags+=" --nocheck";;
         --testing)      _repo_testing="yes";;
