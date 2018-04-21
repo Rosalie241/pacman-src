@@ -26,6 +26,7 @@ _repo_archs="any x86_64"
 _newline=yes
 _quiet=no
 _search_only=no
+_small_update=no
 # Print text
 #
 function _print() {
@@ -237,26 +238,50 @@ function _usage() {
 	echo "$0 [--testing|-t]		| Builds the latest version			"
 	echo "$0 [--quiet|-q]		| silent mode						"
 	echo "$0 [--search|-Q]		| Searches the given package, returns 0 if found"
+	echo "$0 [--supdate-k]		| Updates the cache without linking"
+}
+function _parse_short() {
+	args=$(echo $* | sed "s/-//g" | grep -o .)
+	for arg in $args
+	do
+		case $arg in
+    	        b) _build_only=yes;;
+    	        q) _quiet=yes;;
+    	        Q) _search_only=yes;;
+    	        u) _update=yes;;
+    	        k) _small_update=yes; _update=yes;;
+    	        s) _makepkg_flags+=" --skipinteg";;
+    	        n) _makepkg_flags+=" --noconfirm";;
+    	        t) _repo_testing=yes;;
+    	        f) _makepkg_flags+=" -f";;
+    	        h) _usage; exit;;
+    	esac
+	done
 }
 _checkreq
 _init_cache
-for item in $@	
+for item in $@
 do
-	case $item in
-		--build 		|-b) _build_only=yes;;
-		--quiet			|-q) _quiet=yes;;
-		--search		|-Q) _search_only=yes;;
-		--update		|-u) _update=yes;;
-		--skipchecks	|-s) _makepkg_flags+=" --skipinteg";;
-		--noconfirm		|-n) _makepkg_flags+=" --noconfirm";;
-		--testing		|-t) _repo_testing="yes";;
-		--force			|-f) _makepkg_flags+=" -f";;
-		--help   |-h|--*|-*) _usage; exit;;
-		*) _packages+="$item "
-	esac
+    case $item in
+        --build) _build_only=yes;;
+        --quiet) _quiet=yes;;
+        --search) _search_only=yes;;
+        --update) _update=yes;;
+        --supdate) _small_update=yes; _update=yes;;
+        --skipchecks) _makepkg_flags+=" --skipinteg";;
+        --noconfirm) _makepkg_flags+=" --noconfirm";;
+        --testing) _repo_testing="yes";;
+        --force ) _makepkg_flags+=" -f";;
+        --help|--*) _usage; exit;;
+        -*) _parse_short $item ;;
+        *) _packages+="$item ";;
+    esac
 done
 _update_cache
-_update_symlinks
+if [ "$_small_update" = "no" ]
+then
+	_update_symlinks
+fi
 for _package in $_packages
 do
 	_wprint "Searching ${_color_blue}$_package"
