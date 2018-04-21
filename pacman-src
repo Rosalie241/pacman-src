@@ -113,7 +113,8 @@ function _update_symlinks() {
                         _source="$_target_repo_dir/$_package"
                         _target="$_target_repo_dir/$_item"
                         if [ ! -d "$_target" ] && \
-                            [ ! -f "$_source" ] 
+                            [ ! -f "$_source" ] && \
+                            [ "$_source" != "$_target" ]
                         then
                             _newline=no
                             _sprint "${_color_white}Linking ${_color_yel}$_source ${_color_white}to ${_color_blue}$_target"
