@@ -151,7 +151,6 @@ function _start_search() {
 		if [ -d "$_target_dir/packages/$repo/$_pkgname" ]
 		then
 			_pkg_not_found=no
-			_wprint "Package ${_color_blue}$1${_color_white} found!"
 			if [ "$_repo_testing" = "yes" ]
 			then
 				_repo_version="testing"
@@ -282,12 +281,18 @@ if [ "$_small_update" = "no" ]
 then
 	_update_symlinks
 fi
+# Search all packages before building
+_wprint "Searching packages"
 for _package in $_packages
 do
-	_wprint "Searching ${_color_blue}$_package"
+	_sprint "searching ${_color_blue}$_package"
 	_start_search "$_package"
-	if [ "$_search_only" = "no" ]
-	then
-		_start_build  "$_package"
-	fi
 done
+if [ "$_search_only" = "no" ]
+then
+	for _package in $_packages
+	do
+		_start_search "$_package"
+		_start_build "$_package"
+	done
+fi
