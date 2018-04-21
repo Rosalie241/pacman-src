@@ -238,6 +238,7 @@ function _usage() {
 	echo "$0 [--quiet|-q]		| silent mode						"
 	echo "$0 [--search|-Q]		| Searches the given package, returns 0 if found"
 	echo "$0 [--supdate-k]		| Updates the cache without linking"
+	echo "$0 [--nocheck]|-l]	| skips do_check function from PKGBUILD"
 }
 function _parse_short() {
 	args=$(echo "$@" | sed "s/-//g" | grep -o .)
@@ -253,6 +254,7 @@ function _parse_short() {
     	        n) _makepkg_flags+=" --noconfirm";;
     	        t) _repo_testing=yes;;
     	        f) _makepkg_flags+=" -f";;
+				l) _makepkg_flags+=" --nocheck";;
     	        h) _usage; exit;;
     	esac
 	done
@@ -262,18 +264,19 @@ _init_cache
 for item in $@
 do
     case $item in
-        --build) _build_only=yes;;
-        --quiet) _quiet=yes;;
-        --search) _search_only=yes;;
-        --update) _update=yes;;
-        --supdate) _small_update=yes; _update=yes;;
-        --skipchecks) _makepkg_flags+=" --skipinteg";;
-        --noconfirm) _makepkg_flags+=" --noconfirm";;
-        --testing) _repo_testing="yes";;
-        --force ) _makepkg_flags+=" -f";;
-        --help|--*) _usage; exit;;
-        -*) _parse_short "$item" ;;
-        *) _packages+="$item ";;
+        --build) 		_build_only=yes;;
+        --quiet) 		_quiet=yes;;
+        --search) 		_search_only=yes;;
+        --update) 		_update=yes;;
+        --supdate) 		_small_update=yes; _update=yes;;
+        --skipchecks) 	_makepkg_flags+=" --skipinteg";;
+        --noconfirm) 	_makepkg_flags+=" --noconfirm";;
+		--nocheck) 		_makepkg_flags+=" --nocheck";;
+        --testing) 		_repo_testing="yes";;
+        --force ) 		_makepkg_flags+=" -f";;
+        --help|--*) 	_usage; exit;;
+        -*) 			_parse_short "$item" ;;
+        *) 				_packages+="$item ";;
     esac
 done
 _update_cache
