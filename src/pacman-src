@@ -110,6 +110,7 @@ function _init_cache() {
         _wprint "Cloning packages repos"
         git clone git://git.archlinux.org/svntogit/packages.git  $_git_flags "$_target_dir/packages/core"
         git clone git://git.archlinux.org/svntogit/community.git $_git_flags "$_target_dir/packages/community"
+        _update_symlinks 
     fi
 }
 # Update the cache
