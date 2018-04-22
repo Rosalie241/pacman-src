@@ -50,6 +50,7 @@ _nowarn=no
 _clean=yes
 _cache=no
 _cached_found=no
+_ignore_error=no
 # Print text
 #
 function _print() {
@@ -84,6 +85,15 @@ function _sprint() {
     _newline=no
     _print "  ${_color_blue}->${_color_white} $*${_color_reset}"
     _newline=yes
+}
+# Error out
+#
+function _err() {
+    _errprint "$@"
+    if [ "$_ignore_error" = "no" ]
+    then
+        exit 1
+    fi
 }
 # clone the package repo to init the cache
 #
@@ -194,8 +204,7 @@ function _start_search() {
     done
     if [ "$_pkg_not_found" = "yes" ]
     then
-        _errprint "${_color_blue}$1${_color_white} not found!"
-        exit 1
+        _err "${_color_blue}$1${_color_white} not found!"
     fi
 }
 # Start the build using makepkg
@@ -224,8 +233,7 @@ function _start_build() {
             _wprint "Installing ${_color_blue}$1"
             if ! sudo pacman $_pacman_flags -U $1-*.pkg*
             then
-                _errprint "Installing ${_color_blue}$1 ${_color_white}failed!"
-                exit 1
+                _err "Installing ${_color_blue}$1 ${_color_white}failed!"
             fi
         fi
         if [ "$_clean" = "yes" ]
@@ -235,8 +243,7 @@ function _start_build() {
         fi
         return
     else
-        _errprint "Building ${_color_blue}$1 ${_color_white}failed!"
-        exit 1
+        _err "Building ${_color_blue}$1 ${_color_white}failed!"
     fi
 }
 # Checks requirements
@@ -283,8 +290,7 @@ function _check_cache() {
         _wprint "Package ${_color_blue}$1 ${_color_white}has been built already, installing cached version!"
         if ! sudo pacman $_pacman_flags -U "$_target_dir/build/"$1-$pkgver*
         then
-            _errprint "Failed to install ${_color_blue}$1"
-            exit 1
+            _err "Failed to install ${_color_blue}$1"
         fi
     fi
 }
@@ -305,6 +311,7 @@ function _usage() {
     echo "$0 [--nocheck   |  -l]  | skips do_check function from PKGBUILD"
     echo "$0 [--cleanbuild|  -c]  | cleans build before building the package"
     echo "$0 [--dirty     |  -d]  | Does not clean even when build was successful"
+    echo "$0 [--ignore    |  -g]  | Does not exit after error"
 }
 function _parse_short() {
     args=$(echo "$@" | sed "s/-//g" | grep -o .)
@@ -324,6 +331,7 @@ function _parse_short() {
                 f) _makepkg_flags+=" -f"; _pacman_flags+=" --force";;
                 l) _makepkg_flags+=" --nocheck";;
                 m) _cache=yes;;
+                g) _ignore_error=yes;;
                 h|*) _usage; exit;;
         esac
     done
@@ -351,6 +359,7 @@ do
         --dirty)        _clean=no;;
         --force )       _makepkg_flags+=" -f"; _pacman_flags+=" --force";;
         --cache)        _cache=yes;;
+        --ignore)       _ignore_error=yes;;
         --help|--*)     _usage; exit;;
         -*)             _parse_short "$item" ;;
         *)              _packages+="$item ";;
