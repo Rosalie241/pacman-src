@@ -368,7 +368,7 @@ do
         --update)       _update=yes;;
         --supdate)      _small_update=yes; _update=yes;;
         --skipchecks)   _makepkg_flags+=" --skipinteg";;
-        --noconfirm)    _makepkg_flags+=" --noconfiirm"; _pacman_flags+=" --noconfirm";;
+        --noconfirm)    _makepkg_flags+=" --noconfirm"; _pacman_flags+=" --noconfirm";;
         --cleanbuild)   _makepkg_flags+=" --cleanbuild";;
         --nocheck)      _makepkg_flags+=" --nocheck";;
         --testing)      _repo_testing=yes;;
