@@ -32,6 +32,7 @@ _color_reset='\033[0m'
 # Declare other stuff
 #
 _target_dir="$XDG_CACHE_HOME/pacman-src"
+_target_cache_dir="$_target_dir/cache/"
 _update=no
 _build_only=no
 _repo_testing=no
@@ -215,19 +216,17 @@ function _start_build() {
         _cached_found=no
         return
     fi
-     _target_build_dir="$_target_dir/build/"
     if [ "$_build_only" = "yes" ] || \
         [ "$_cache" = "yes" ]
     then
-        if [ ! -d "$_target_build_dir" ]
+        if [ ! -d "$_target_cache_dir" ]
         then
-            mkdir -p "$_target_build_dir"
+            mkdir -p "$_target_cache_dir"
         fi
-        _makepkg_flags+=" PKGDEST=""$_target_build_dir"""
+        export PKGDEST="$_target_cache_dir"
     fi
     if makepkg $_makepkg_flags
-    then
-        _target_build_dir="$_target_dir/build"
+    then        
         if [ "$_build_only" = "no" ]
         then
             _wprint "Installing ${_color_blue}$1"
@@ -284,11 +283,11 @@ function _checkreq() {
 #
 function _check_cache() {
     source PKGBUILD 2> /dev/null
-    if [ -f "$_target_dir/build/"$1-$pkgver* ]
+    if [ -f "$_target_cache_dir/"$1-$pkgver* ]
     then
         _cached_found=yes
         _wprint "Package ${_color_blue}$1 ${_color_white}has been built already, installing cached version!"
-        if ! sudo pacman $_pacman_flags -U "$_target_dir/build/"$1-$pkgver*
+        if ! sudo pacman $_pacman_flags -U "$_target_cache_dir/"$1-$pkgver*
         then
             _err "Failed to install ${_color_blue}$1"
         fi
