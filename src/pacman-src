@@ -38,9 +38,9 @@ _build_only=no
 _repo_testing=no
 _makepkg_flags=(-s)
 _git_flags=("--depth=1")
-_repos="core community"
-_stable_repos="core community extra multilib"
-_testing_repos="testing community-testing multilib-testing"
+_repos=(core community)
+_stable_repos=(core community extra multilib)
+_testing_repos=(testing community-testing multilib-testing)
 _repo_archs=(any x86_64)
 _newline=yes
 _quiet=no
@@ -116,7 +116,7 @@ function _init_cache() {
 #
 function _update_cache() {
     _wprint "Updating repos"
-    for repo in $_repos
+    for repo in "${_repos[@]}"
     do
         cd "$_target_dir/packages/$repo" || exit 1
         _sprint "updating ${_color_blue}$repo ${_color_white}repo"
@@ -128,7 +128,7 @@ function _update_cache() {
 #
 function _update_symlinks() {
     _wprint "Updating symlinks"
-    for _repo in $_repos
+    for _repo in "${_repos[@]}"
     do
         _target_repo_dir="$_target_dir/packages/$_repo"
         find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
@@ -162,11 +162,9 @@ function _update_symlinks() {
 function _build_cd () {
     # note: '$repo' is from _start_search
     _found_dir=false
-    for _arch in ${_repo_archs[@]}
+    for _arch in "${_repo_archs[@]}"
     do
-        # When you quote this, it will fail
-        # shellcheck disable=SC2068
-        for _repo in $@
+        for _repo in "$@"
         do
             _target_build_dir="$_target_dir/packages/$repo/$_pkgname/repos/$_repo-$_arch"
             if [ -d "$_target_build_dir" ]
@@ -186,7 +184,7 @@ function _build_cd () {
 # Search the package
 #
 function _start_search() {
-    for repo in $_repos
+    for repo in "${_repos[@]}"
     do
         _pkgname=$1
         if [ -d "$_target_dir/packages/$repo/$_pkgname" ]
@@ -195,10 +193,10 @@ function _start_search() {
             if [ "$_repo_testing" = "yes" ]
             then
                 _repo_version="testing"
-                _build_cd "$_testing_repos"
+                _build_cd "${_testing_repos[@]}"
             else
                 _repo_version="stable"
-                _build_cd "$_stable_repos"
+                _build_cd "${_stable_repos[@]}"
             fi
             return
         else
@@ -300,7 +298,7 @@ function _pkg_info() {
     # '$_pkg_arch' from _build_cd
     if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
     then
-        for _arch in ${_repo_archs[@]}
+        for _arch in "${_repo_archs[@]}"
         do
             _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_arch" | head -1)$PKGEXT"
             if [ "$_pkg_file" != "$PKGEXT" ]
