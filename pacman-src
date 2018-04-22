@@ -242,8 +242,14 @@ function _start_build() {
 # Checks requirements
 #
 function _checkreq() {
+    # Make sure we're not running as root!
+    if [ "$UID" = "0" ]
+    then
+        _errprint "running this program as root is NOT allowed!"
+        exit 1
+    fi
     _missing_req=no
-    for _cmd in git pacman bash makepkg ln
+    for _cmd in git pacman bash makepkg ln sudo
     do
         if ! command -v $_cmd > /dev/null 2>/dev/null
         then
