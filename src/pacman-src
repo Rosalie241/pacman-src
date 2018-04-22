@@ -174,8 +174,8 @@ function _build_cd () {
             if [ -d "$_target_build_dir" ]
             then
                 _found_dir=true
-                cd "$_target_build_dir" || exit 1
                 _pkg_arch="$arch"
+                cd "$_target_build_dir" || exit 1
             fi
         done
     done
@@ -287,15 +287,41 @@ function _checkreq() {
         _err "makepkg.conf not found!"
     else
         source "/etc/makepkg.conf"
+        if [ ! "$PKGEXT" ]
+        then
+            _err "PKGEXT is empty!"
+        fi
     fi
 }
 # Get package info
 #
 function _pkg_info() {
     source PKGBUILD 2> /dev/null
-    # Get _pkg_arch from _build_cd
-    if ! _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
+    # '$_pkg_arch' from _build_cd
+    if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
     then
+        for _arch in $_repo_archs
+        do
+            _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_arch" | head -1)$PKGEXT"
+            if [ "$_pkg_file" != "$PKGEXT" ]
+            then
+                return
+            fi
+        done
+        # Extra sanity check
+        if [ "$_pkg_file" = "$PKGEXT" ]
+        then
+            _warnprint "cannot find architecture for ${_color_blue}$1"
+            _pkg_file="$(makepkg --packagelist | grep "$1" | head -1)$PKGEXT"
+            if [ "$_pkg_file" = "$PKGEXT" ]
+            then
+                _err "failed to retrieve the filename for ${_color_blue}$1"
+            else
+                return
+            fi
+        fi
+
+    else
         _err "failed to retrieve the filename for ${_color_blue}$1"
     fi
 }
