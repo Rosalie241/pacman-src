@@ -219,6 +219,7 @@ function _start_build() {
         _cached_found=no
         return
     fi
+    _wprint "Building ${_color_blue}$1"
     if [ "$_build_only" = "yes" ] || \
         [ "$_cache" = "yes" ]
     then
