@@ -36,8 +36,8 @@ _target_cache_dir="$_target_dir/cache/"
 _update=no
 _build_only=no
 _repo_testing=no
-_makepkg_flags="-s"
-_git_flags="--depth=1"
+_makepkg_flags=(-s)
+_git_flags=("--depth=1")
 _repos="core community"
 _stable_repos="core community extra multilib"
 _testing_repos="testing community-testing multilib-testing"
@@ -107,39 +107,34 @@ function _init_cache() {
     then
         mkdir -p "$_target_dir"
         _wprint "Cloning packages repos"
-        git clone git://git.archlinux.org/svntogit/packages.git  $_git_flags "$_target_dir/packages/core"
-        git clone git://git.archlinux.org/svntogit/community.git $_git_flags "$_target_dir/packages/community"
+        git clone git://git.archlinux.org/svntogit/packages.git  "${_git_flags[@]}" "$_target_dir/packages/core"
+        git clone git://git.archlinux.org/svntogit/community.git "${_git_flags[@]}" "$_target_dir/packages/community"
         _update_symlinks 
     fi
 }
 # Update the cache
 #
 function _update_cache() {
-    if [ "$_update" = "yes" ]
-    then
-        _wprint "Updating repos"
-        for repo in $_repos
-        do
-            cd "$_target_dir/packages/$repo" || exit 1
-            _sprint "updating ${_color_blue}$repo ${_color_white}repo"
-            git fetch --all $_git_flags     > /dev/null
-            git reset --hard                > /dev/null
-        done
-    fi
+    _wprint "Updating repos"
+    for repo in $_repos
+    do
+        cd "$_target_dir/packages/$repo" || exit 1
+        _sprint "updating ${_color_blue}$repo ${_color_white}repo"
+        git fetch --all "${_git_flags[@]}" > /dev/null
+        git reset --hard                 > /dev/null
+    done
 }
 # Update symlinks
 #
 function _update_symlinks() {
-    if [ "$_update" = "yes" ]
-    then
-        _wprint "Updating symlinks"
-        for _repo in $_repos
+    _wprint "Updating symlinks"
+    for _repo in $_repos
+    do
+        _target_repo_dir="$_target_dir/packages/$_repo"
+        find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
         do
-            _target_repo_dir="$_target_dir/packages/$_repo"
-            find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
-            do
-                source "$_package" 2>/dev/null 
-                for _item in ${pkgname[@]}
+            source "$_package" 2>/dev/null 
+                for _item in "${pkgname[@]}"
                 do 
                     if [[ $_package != *repos* ]]
                     then
@@ -157,10 +152,9 @@ function _update_symlinks() {
                             ln -s "$_source" "$_target"
                         fi
                     fi
-                done
             done
         done
-    fi
+    done
 }
 function _build_cd () {
     # note: '$repo' is from _start_search
@@ -229,12 +223,12 @@ function _start_build() {
         fi
         export PKGDEST="$_target_cache_dir"
     fi
-    if makepkg $_makepkg_flags
+    if makepkg "${_makepkg_flags[@]}"
     then        
         if [ "$_build_only" = "no" ]
         then
             _wprint "Installing ${_color_blue}$1"
-            if ! sudo pacman $_pacman_flags -U "$_pkg_file"
+            if ! sudo pacman "${_pacman_flags[@]}" -U "$_pkg_file"
             then
                 _err "Installing ${_color_blue}$1 ${_color_white}failed!"
             fi
@@ -331,7 +325,7 @@ function _check_cache() {
     then
         _cached_found=yes
         _wprint "Package ${_color_blue}$1 ${_color_white}has been built already, installing cached version!"
-        if ! sudo pacman $_pacman_flags -U "$_target_cache_dir/$_pkg_file"
+        if ! sudo pacman "${_pacman_flags[@]}" -U "$_target_cache_dir/$_pkg_file"
         then
             _err "Failed to install ${_color_blue}$1"
         fi
@@ -366,13 +360,13 @@ function _parse_short() {
                 Q) _search_only=yes;;
                 u) _update=yes;;
                 k) _small_update=yes; _update=yes;;
-                s) _makepkg_flags+=" --skipinteg";;
-                n) _makepkg_flags+=" --noconfirm"; _pacman_flags+=" --noconfirm";;
-                c) _makepkg_flags+=" --cleanbuild";;
+                s) _makepkg_flags+=(--skipinteg);;
+                n) _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
+                c) _makepkg_flags+=(--cleanbuild);;
                 t) _repo_testing=yes;;
                 d) _clean=no;;
-                f) _makepkg_flags+=" -f"; _pacman_flags+=" --force";;
-                l) _makepkg_flags+=" --nocheck";;
+                f) _makepkg_flags+=(-f); _pacman_flags+=(--force);;
+                l) _makepkg_flags+=(--nocheck);;
                 m) _cache=yes;;
                 g) _ignore_error=yes;;
                 h|*) _usage; exit;;
@@ -386,32 +380,35 @@ then
     _usage
     exit
 fi
-for item in $@
+for _argument in "$@"
 do
-    case $item in
+    case $_argument in
         --build)        _build_only=yes;;
         --quiet)        _quiet=yes;;
         --search)       _search_only=yes;;
         --update)       _update=yes;;
         --supdate)      _small_update=yes; _update=yes;;
-        --skipchecks)   _makepkg_flags+=" --skipinteg";;
-        --noconfirm)    _makepkg_flags+=" --noconfirm"; _pacman_flags+=" --noconfirm";;
-        --cleanbuild)   _makepkg_flags+=" --cleanbuild";;
-        --nocheck)      _makepkg_flags+=" --nocheck";;
+        --skipchecks)   _makepkg_flags+=(--skipinteg);;
+        --noconfirm)    _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
+        --cleanbuild)   _makepkg_flags+=(--cleanbuild);;
+        --nocheck)      _makepkg_flags+=(--nocheck);;
         --testing)      _repo_testing=yes;;
         --dirty)        _clean=no;;
-        --force )       _makepkg_flags+=" -f"; _pacman_flags+=" --force";;
+        --force )       _makepkg_flags+=(-f); _pacman_flags+=(--force);;
         --cache)        _cache=yes;;
         --ignore)       _ignore_error=yes;;
         --help|--*)     _usage; exit;;
-        -*)             _parse_short "$item" ;;
-        *)              _packages+="$item ";;
+        -*)             _parse_short "$_argument" ;;
+        *)              _packages+="$_argument ";;
     esac
 done
-_update_cache
-if [ "$_small_update" = "no" ]
+if [ "$_update" = "yes" ]
 then
-    _update_symlinks
+    _update_cache
+    if [ "$_small_update" = "no" ]
+    then
+        _update_symlinks
+    fi
 fi
 # Search all packages before building
 if [ "$_packages" ]
