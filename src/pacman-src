@@ -133,25 +133,28 @@ function _update_symlinks() {
         _target_repo_dir="$_target_dir/packages/$_repo"
         find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
         do
-            source "$_package" 2>/dev/null 
-                for _item in "${pkgname[@]}"
-                do 
-                    if [[ $_package != *repos* ]]
+            # Disable warnings
+            # shellcheck disable=SC1090
+            source "$_package" 2>/dev/null
+            # shellcheck disable=SC2154            
+            for _item in "${pkgname[@]}"
+            do 
+                if [[ $_package != *repos* ]]
+                then
+                    _item="$(echo    "$_item"    | rev | cut -d'/' -f2 | rev)"
+                    _package="$(echo "$_package" | rev | cut -d'/' -f3 | rev)"
+                    _source="$_target_repo_dir/$_package"
+                    _target="$_target_repo_dir/$_item"
+                    if [ ! -d "$_target" ] && \
+                        [ ! -f "$_source" ] && \
+                        [ "$_source" != "$_target" ]
                     then
-                        _item="$(echo    "$_item"    | rev | cut -d'/' -f2 | rev)"
-                        _package="$(echo "$_package" | rev | cut -d'/' -f3 | rev)"
-                        _source="$_target_repo_dir/$_package"
-                        _target="$_target_repo_dir/$_item"
-                        if [ ! -d "$_target" ] && \
-                            [ ! -f "$_source" ] && \
-                            [ "$_source" != "$_target" ]
-                        then
-                            _newline=no
-                            _sprint "${_color_white}Linking ${_color_yel}$_source ${_color_white}to ${_color_blue}$_target"
-                            _newline=yes
-                            ln -s "$_source" "$_target"
-                        fi
+                        _newline=no
+                        _sprint "${_color_white}Linking ${_color_yel}$_source ${_color_white}to ${_color_blue}$_target"
+                        _newline=yes
+                        ln -s "$_source" "$_target"
                     fi
+                fi
             done
         done
     done
@@ -161,6 +164,8 @@ function _build_cd () {
     _found_dir=false
     for arch in $_repo_archs
     do
+        # When you quote this, it will fail
+        # shellcheck disable=SC2068
         for _repo in $@
         do
             _target_build_dir="$_target_dir/packages/$repo/$_pkgname/repos/$_repo-$arch"
@@ -279,6 +284,7 @@ function _checkreq() {
     then
         _err "makepkg.conf not found!"
     else
+        # shellcheck disable=SC1091
         source "/etc/makepkg.conf"
         if [ ! "$PKGEXT" ]
         then
@@ -289,7 +295,8 @@ function _checkreq() {
 # Get package info
 #
 function _pkg_info() {
-    source PKGBUILD 2> /dev/null
+    # shellcheck disable=SC1091
+    source ./PKGBUILD 2> /dev/null
     # '$_pkg_arch' from _build_cd
     if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
     then
