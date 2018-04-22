@@ -41,7 +41,7 @@ _git_flags=("--depth=1")
 _repos="core community"
 _stable_repos="core community extra multilib"
 _testing_repos="testing community-testing multilib-testing"
-_repo_archs="any x86_64"
+_repo_archs=(any x86_64)
 _newline=yes
 _quiet=no
 _search_only=no
@@ -162,17 +162,17 @@ function _update_symlinks() {
 function _build_cd () {
     # note: '$repo' is from _start_search
     _found_dir=false
-    for arch in $_repo_archs
+    for _arch in ${_repo_archs[@]}
     do
         # When you quote this, it will fail
         # shellcheck disable=SC2068
         for _repo in $@
         do
-            _target_build_dir="$_target_dir/packages/$repo/$_pkgname/repos/$_repo-$arch"
+            _target_build_dir="$_target_dir/packages/$repo/$_pkgname/repos/$_repo-$_arch"
             if [ -d "$_target_build_dir" ]
             then
                 _found_dir=true
-                _pkg_arch="$arch"
+                _pkg_arch="$_arch"
                 cd "$_target_build_dir" || exit 1
             fi
         done
@@ -300,7 +300,7 @@ function _pkg_info() {
     # '$_pkg_arch' from _build_cd
     if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
     then
-        for _arch in $_repo_archs
+        for _arch in ${_repo_archs[@]}
         do
             _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_arch" | head -1)$PKGEXT"
             if [ "$_pkg_file" != "$PKGEXT" ]
