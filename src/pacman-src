@@ -51,6 +51,7 @@ _clean=yes
 _cache=no
 _cached_found=no
 _ignore_error=no
+_pkg_group=no
 _pkg_file=none
 _pkg_arch=none
 # Print text
@@ -205,7 +206,19 @@ function _start_search() {
     done
     if [ "$_pkg_not_found" = "yes" ]
     then
-        _err "${_color_blue}$1${_color_white} not found!"
+        if _group_packages="$(pacman -Qqg "$1" 2>/dev/null)"
+        then
+            if [ "$_search_pkg_only" = "no" ]
+            then
+                _pkg_group=yes
+                for _package in $_group_packages
+                do
+                    _packages_group+=("$_package")
+                done
+            fi
+        else
+            _err "${_color_blue}$1${_color_white} not found!"
+        fi
     fi
 }
 # Start the build using makepkg
@@ -355,6 +368,30 @@ function _usage() {
     echo "$0 [--dirty     |  -d]  | Does not clean even when build was successful"
     echo "$0 [--ignore    |  -g]  | Does not exit after error"
 }
+# Main build loop
+#
+function _build_loop() {
+    if [ "$_search_only" = "no" ]
+    then
+        for _package in "$@"
+        do
+            _start_search "$_package"
+            if [ "$_pkg_group" = "no" ]
+            then
+                _pkg_info "$_package"
+                if [ "$_cache" = "yes" ]
+                then
+                    _check_cache "$_package"
+                fi
+                _start_build "$_package"
+            else
+                _pkg_group=no
+            fi
+        done
+    fi
+}
+# Short argument parser
+#
 function _parse_short() {
     args=$(echo "$@" | sed "s/-//g" | grep -o .)
     for arg in $args
@@ -404,7 +441,7 @@ do
         --ignore)       _ignore_error=yes;;
         --help|--*)     _usage; exit;;
         -*)             _parse_short "$_argument" ;;
-        *)              _packages+="$_argument ";;
+        *)              _packages+=("$_argument");;
     esac
 done
 if [ "$_update" = "yes" ]
@@ -416,27 +453,19 @@ then
     fi
 fi
 # Search all packages before building
-if [ "$_packages" ]
+if [ "${_packages[0]}" ]
 then  
     _wprint "Searching packages"
 fi
-for _package in $_packages
+_search_pkg_only=yes
+for _package in "${_packages[@]}"
 do
     _nowarn=yes
     _sprint "searching ${_color_blue}$_package"
     _start_search "$_package"
     _nowarn=no
 done
-if [ "$_search_only" = "no" ]
-then
-    for _package in $_packages
-    do
-        _start_search "$_package"
-        _pkg_info "$_package"
-        if [ "$_cache" = "yes" ]
-        then
-            _check_cache "$_package"
-        fi
-        _start_build "$_package"
-    done
-fi
+_search_pkg_only=no
+# Start searching and building
+_build_loop "${_packages[@]}"
+_build_loop "${_packages_group[@]}"
