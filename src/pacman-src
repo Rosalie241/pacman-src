@@ -52,6 +52,8 @@ _clean=yes
 _cache=no
 _cached_found=no
 _ignore_error=no
+_pkg_file=none
+_pkg_arch=none
 # Print text
 #
 function _print() {
@@ -172,6 +174,7 @@ function _build_cd () {
             then
                 _found_dir=true
                 cd "$_target_build_dir" || exit 1
+                _pkg_arch="$arch"
             fi
         done
     done
@@ -230,7 +233,7 @@ function _start_build() {
         if [ "$_build_only" = "no" ]
         then
             _wprint "Installing ${_color_blue}$1"
-            if ! sudo pacman $_pacman_flags -U $1-*.pkg*
+            if ! sudo pacman $_pacman_flags -U "$_pkg_file"
             then
                 _err "Installing ${_color_blue}$1 ${_color_white}failed!"
             fi
@@ -267,7 +270,6 @@ function _checkreq() {
     then
         exit 1
     fi
-    
     if [ -f "/etc/os-release" ]
     then
         ID=NULL
@@ -278,16 +280,31 @@ function _checkreq() {
         fi
         unset ID
     fi
+    if [ ! -f "/etc/makepkg.conf" ]
+    then
+        _err "makepkg.conf not found!"
+    else
+        source "/etc/makepkg.conf"
+    fi
+}
+# Get package info
+#
+function _pkg_info() {
+    source PKGBUILD 2> /dev/null
+    # Get _pkg_arch from _build_cd
+    if ! _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
+    then
+        _err "failed to retrieve the filename for ${_color_blue}$1"
+    fi
 }
 # Checks if package has been built already 
 #
 function _check_cache() {
-    source PKGBUILD 2> /dev/null
-    if [ -f "$_target_cache_dir/"$1-$pkgver* ]
+    if [ -f "$_target_cache_dir/$_pkg_file" ]
     then
         _cached_found=yes
         _wprint "Package ${_color_blue}$1 ${_color_white}has been built already, installing cached version!"
-        if ! sudo pacman $_pacman_flags -U "$_target_cache_dir/"$1-$pkgver*
+        if ! sudo pacman $_pacman_flags -U "$_target_cache_dir/$_pkg_file"
         then
             _err "Failed to install ${_color_blue}$1"
         fi
@@ -386,6 +403,7 @@ then
     for _package in $_packages
     do
         _start_search "$_package"
+        _pkg_info "$_package"
         if [ "$_cache" = "yes" ]
         then
             _check_cache "$_package"
