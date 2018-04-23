@@ -28,17 +28,25 @@ _cached_found=no
 _cache=no
 _update=no
 _build_only=no
-
+_system_config_file="/etc/pacman-src.conf"
 if [ ! "$XDG_CACHE_HOME" ]
 then
     XDG_CACHE_HOME="$HOME/.cache"
 fi
-if [ -f "/etc/pacman-src.conf" ]
+if [ ! "$XDG_CONFIG_HOME" ]
 then
-    source /etc/pacman-src.conf
+    XDG_CONFIG_HOME="$HOME/.config"
+fi
+if [ -f "$_system_config_file" ]
+then
+    source "$_system_config_file"
 else
     echo "missing required config: /etc/pacman-src.conf!"
     exit 1
+fi
+if [ -f "$_user_config_file" ]
+then
+    source "$_user_config_file"
 fi
 
 # Print text
