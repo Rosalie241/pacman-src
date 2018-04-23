@@ -17,6 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+# Default 
+_pkg_group=no
+_pkg_file=none
+_pkg_arch=none
+_newline=yes
+_search_only=no
+_small_update=no
+_cached_found=no
+_cache=no
+_update=no
+_build_only=no
+
 if [ ! "$XDG_CACHE_HOME" ]
 then
     XDG_CACHE_HOME="$HOME/.cache"
@@ -28,6 +40,7 @@ else
     echo "missing required config: /etc/pacman-src.conf!"
     exit 1
 fi
+
 # Print text
 #
 function _print() {
@@ -344,6 +357,7 @@ function _usage() {
     echo "$0 [--cleanbuild|  -c]  | cleans build before building the package"
     echo "$0 [--dirty     |  -d]  | Does not clean even when build was successful"
     echo "$0 [--ignore    |  -g]  | Does not exit after error"
+    echo "$0 [--nowarn    |  -x]  | Disables warnings"
 }
 # Main build loop
 #
@@ -388,11 +402,11 @@ function _parse_short() {
                 l) _makepkg_flags+=(--nocheck);;
                 m) _cache=yes;;
                 g) _ignore_error=yes;;
+                x) _nowarn=yes;;
                 h|*) _usage; exit;;
         esac
     done
 }
-_checkreq
 _init_cache
 if [ "${#@}" = "0" ]
 then
@@ -416,11 +430,13 @@ do
         --force )       _makepkg_flags+=(-f); _pacman_flags+=(--force);;
         --cache)        _cache=yes;;
         --ignore)       _ignore_error=yes;;
+        --nowarn)       _nowarn=yes;;
         --help|--*)     _usage; exit;;
         -*)             _parse_short "$_argument" ;;
         *)              _packages+=("$_argument");;
     esac
 done
+_checkreq
 if [ "$_update" = "yes" ]
 then
     _update_cache
