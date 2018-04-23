@@ -392,7 +392,7 @@ function _usage() {
 #
 function _build_loop() {
     if [ "$_search_only" = "yes" ] || \
-        [ ! "$@" ]
+        [ "${#@}" = "0" ]
     then
         return
     fi
