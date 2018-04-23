@@ -23,5 +23,5 @@ pkgver() {
 
 package() {
   cd "$_pkgname"
-  make install prefix="$pkgdir/usr/"
+  make install prefix="/usr/" DESTDIR="$pkgdir"
 }
