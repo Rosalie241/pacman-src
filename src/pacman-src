@@ -41,7 +41,7 @@ if [ -f "$_system_config_file" ]
 then
     source "$_system_config_file"
 else
-    echo "missing required config: /etc/pacman-src.conf!"
+    echo "missing required config: $_system_config_file!"
     exit 1
 fi
 if [ -f "$_user_config_file" ]
