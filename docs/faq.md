@@ -1,5 +1,3 @@
-# pacman-src FAQ
-
 # How do I (re)compile my whole system?
 * info: this will make a package list of all the valid packages(verified by pacman-src), then passes that list to pacman-src
 ```
