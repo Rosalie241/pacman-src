@@ -1,3 +1,5 @@
+# pacman-src 
+* read the FAQ [here](docs/faq.md)
 ```
 /usr/bin/pacman-src [package]            | Builds and installs the package   
 /usr/bin/pacman-src [--update    |  -u]  | Updates the cache                 
