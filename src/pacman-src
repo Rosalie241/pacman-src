@@ -201,7 +201,8 @@ function _start_search() {
     for repo in "${_repos[@]}"
     do
         _pkgname=$1
-        if [ -d "$_target_dir/packages/$repo/$_pkgname" ]
+        _pkg_dir="$_target_dir/packages/$repo/$_pkgname"
+        if [ -d "$_pkg_dir" ]
         then
             _pkg_not_found=no
             if [ "$_repo_testing" = "yes" ]
@@ -322,6 +323,20 @@ function _checkreq() {
 # Get package info
 #
 function _pkg_info() {
+    # '$_pkg_dir  ' from _start_search
+    if _real_pkg_dir=$(readlink "$_pkg_dir")
+    then
+        if [ "x$_real_pkg_dir" = "x$_old_pkg_dir" ]
+        then
+            return
+        fi  
+    else
+        if [ "x$_pkg_dir" = "x$_old_pkg_dir" ]
+        then
+            return
+        fi
+    fi
+    _old_pkg_dir="$_pkg_dir"  
     # shellcheck disable=SC1091
     source ./PKGBUILD 2> /dev/null
     # '$_pkg_arch' from _build_cd
