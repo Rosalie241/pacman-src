@@ -29,14 +29,20 @@ _cache=no
 _update=no
 _build_only=no
 _system_config_file="/etc/pacman-src.conf"
+# Check XDG_CACHE_HOME
+# if empty, fall back to $HOME/.cache
 if [ ! "$XDG_CACHE_HOME" ]
 then
     XDG_CACHE_HOME="$HOME/.cache"
 fi
+# Check XDG_CONFIG_HOME 
+# if empty, fall back to $HOME/.config
 if [ ! "$XDG_CONFIG_HOME" ]
 then
     XDG_CONFIG_HOME="$HOME/.config"
 fi
+# Check if the system config file exists
+# else, error out
 if [ -f "$_system_config_file" ]
 then
     source "$_system_config_file"
@@ -44,11 +50,11 @@ else
     echo "missing required config: $_system_config_file!"
     exit 1
 fi
+# Source user configuration if available
 if [ -f "$_user_config_file" ]
 then
     source "$_user_config_file"
 fi
-
 # Print text
 #
 function _print() {
@@ -415,7 +421,6 @@ function _parse_short() {
         esac
     done
 }
-_init_cache
 if [ "${#@}" = "0" ]
 then
     _usage
@@ -445,6 +450,7 @@ do
     esac
 done
 _checkreq
+_init_cache
 if [ "$_update" = "yes" ]
 then
     _update_cache
