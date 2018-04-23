@@ -29,6 +29,7 @@ _cache=no
 _update=no
 _build_only=no
 _system_config_file="/etc/pacman-src.conf"
+_init_cache_finished=no
 # Check XDG_CACHE_HOME
 # if empty, fall back to $HOME/.cache
 if [ ! "$XDG_CACHE_HOME" ]
@@ -45,6 +46,7 @@ fi
 # else, error out
 if [ -f "$_system_config_file" ]
 then
+    # shellcheck source=/etc/pacman-src.conf
     source "$_system_config_file"
 else
     echo "missing required config: $_system_config_file!"
@@ -53,6 +55,7 @@ fi
 # Source user configuration if available
 if [ -f "$_user_config_file" ]
 then
+    # shellcheck disable=SC1090
     source "$_user_config_file"
 fi
 # Print text
@@ -102,16 +105,25 @@ function _err() {
 # clone the package repo to init the cache
 #
 function _init_cache() {
-    if [ ! -d "$_target_dir" ] || \
-        [ ! -d "$_target_dir/packages" ] || \
-        [ ! -d "$_target_dir/packages/core" ] || \
-        [ ! -d "$_target_dir/packages/community" ]
+    _repo_dir_clone=no
+    for _repo_dir in "${_repos[@]}"
+    do
+        if [ ! -d "$_target_dir/packages/$_repo_dir" ]
+        then
+            _repo_dir_clone=yes
+        fi
+    done
+    if [ "$_repo_dir_clone" = "yes" ]
     then
         mkdir -p "$_target_dir"
         _wprint "Cloning packages repos"
-        git clone git://git.archlinux.org/svntogit/packages.git  "${_git_flags[@]}" "$_target_dir/packages/core"
-        git clone git://git.archlinux.org/svntogit/community.git "${_git_flags[@]}" "$_target_dir/packages/community"
+        for _git_link in "${_repo_git_links[@]}"
+        do
+            _git_clone_dir="$(echo "$_git_link" | rev | cut -d'/' -f1 | rev | sed "s/.git//g")"
+            git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir"
+        done
         _update_symlinks 
+        _init_cache_finished=yes
     fi
 }
 # Update the cache
@@ -123,7 +135,7 @@ function _update_cache() {
         cd "$_target_dir/packages/$repo" || exit 1
         _sprint "updating ${_color_blue}$repo ${_color_white}repo"
         git fetch --all "${_git_flags[@]}" > /dev/null
-        git reset --hard                 > /dev/null
+        git reset --hard                   > /dev/null
     done
 }
 # Update symlinks
@@ -376,24 +388,26 @@ function _usage() {
 # Main build loop
 #
 function _build_loop() {
-    if [ "$_search_only" = "no" ]
+    if [ "$_search_only" = "yes" ] || \
+        [ ! "$@" ]
     then
-        for _package in "$@"
-        do
-            _start_search "$_package"
-            if [ "$_pkg_group" = "no" ]
-            then
-                _pkg_info "$_package"
-                if [ "$_cache" = "yes" ]
-                then
-                    _check_cache "$_package"
-                fi
-                _start_build "$_package"
-            else
-                _pkg_group=no
-            fi
-        done
+        return
     fi
+    for _package in "$@"
+    do
+        _start_search "$_package"
+        if [ "$_pkg_group" = "no" ]
+        then
+            _pkg_info "$_package"
+            if [ "$_cache" = "yes" ]
+            then
+                _check_cache "$_package"
+            fi
+            _start_build "$_package"
+        else
+            _pkg_group=no
+        fi
+    done
 }
 # Short argument parser
 #
@@ -454,7 +468,8 @@ _init_cache
 if [ "$_update" = "yes" ]
 then
     _update_cache
-    if [ "$_small_update" = "no" ]
+    if [ "$_small_update" = "no" ] &&
+        [ "$_init_cache_finished" = "no" ]
     then
         _update_symlinks
     fi
