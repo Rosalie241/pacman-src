@@ -21,39 +21,13 @@ if [ ! "$XDG_CACHE_HOME" ]
 then
     XDG_CACHE_HOME="$HOME/.cache"
 fi
-# Declare colors
-#
-_color_white='\033[1;37m'
-_color_green='\033[1;32m'
-_color_red='\033[1;31m'
-_color_yel='\033[0;33m'
-_color_blue='\033[0;34m'
-_color_reset='\033[0m' 
-# Declare other stuff
-#
-_target_dir="$XDG_CACHE_HOME/pacman-src"
-_target_cache_dir="$_target_dir/cache/"
-_update=no
-_build_only=no
-_repo_testing=no
-_makepkg_flags=(-s)
-_git_flags=("--depth=1")
-_repos=(core community)
-_stable_repos=(core community extra multilib)
-_testing_repos=(testing community-testing multilib-testing)
-_repo_archs=(any x86_64)
-_newline=yes
-_quiet=no
-_search_only=no
-_small_update=no
-_nowarn=no
-_clean=yes
-_cache=no
-_cached_found=no
-_ignore_error=no
-_pkg_group=no
-_pkg_file=none
-_pkg_arch=none
+if [ -f "/etc/pacman-src.conf" ]
+then
+    source /etc/pacman-src.conf
+else
+    echo "missing required config: /etc/pacman-src.conf!"
+    exit 1
+fi
 # Print text
 #
 function _print() {
@@ -287,7 +261,10 @@ function _checkreq() {
         export "$(grep ID /etc/os-release | head -1)" 2>/dev/null
         if [ "$ID" != "arch" ]
         then
-            _warnprint "Unsupported platform detected, continue at your own risk"
+            if [ "$_distro_warning" = "yes" ]
+            then
+                _warnprint "Unsupported platform detected, continue at your own risk"
+            fi
         fi
         unset ID
     fi
