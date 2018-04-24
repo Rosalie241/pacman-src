@@ -1,4 +1,5 @@
 # pacman-src 
+* read the manpage for more details!
 * read the FAQ [here](docs/faq.md)
 # Examples
  * `pacman-src base base-devel`

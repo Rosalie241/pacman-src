@@ -385,23 +385,39 @@ function _check_cache() {
 function _usage() {
     if [ "$_quiet" = "no" ]
     then
-        echo "$0 [package]            | Builds and installs the package   "
-        echo "$0 [--update    |  -u]  | Updates the cache                 "
-        echo "$0 [--build     |  -b]  | Build-only, no installing         "
-        echo "$0 [--cache     |  -m]  | Use cache"
-        echo "$0 [--force     |  -f]  | Force overwrite built package     "
-        echo "$0 [--skipchecks|  -s]  | Skips any integrity check         "
-        echo "$0 [--noconfirm |  -n]  | No confirmation                   "
-        echo "$0 [--testing   |  -t]  | Builds the latest version         "
-        echo "$0 [--quiet     |  -q]  | silent mode                       "
-        echo "$0 [--search    |  -Q]  | Searches the given package, returns 0 if found"
-        echo "$0 [--supdate   |  -k]  | Updates the cache without linking"
-        echo "$0 [--nocheck   |  -l]  | skips do_check function from PKGBUILD"
-        echo "$0 [--cleanbuild|  -c]  | cleans build before building the package"
-        echo "$0 [--dirty     |  -d]  | Does not clean even when build was successful"
-        echo "$0 [--ignore    |  -g]  | Does not exit after error"
-        echo "$0 [--nowarn    |  -x]  | Disables warnings"
+        echo -e "pacman-src compiles Arch GNU/Linux packages from source using the ABS\n"
+        echo "Usage: pacman-src [OPTION] [PACKAGE]"
+        echo -e "\nOptions:"
+        echo "  -u, --update        updates the cache"
+        echo "  -b. --build         build-only, no installing"
+        echo "  -m, --cache         use the cache to store the built packages"
+        echo "  -f, --force         passes --force to pacman and makepkg"
+        echo "  -s, --skipchecks    skips any integrity check(s)"
+        echo "  -n, --noconfirm     passes --noconfirm to pacman and makepkg"
+        echo "  -t, --testing       builds the latest version of the given package(s)"
+        echo "  -q, --quiet         silent mode"
+        echo "  -Q, --search        searches the given package(s), returns 0 when found"
+        echo "  -k, --supdate       updates the cache without the linking process"
+        echo "  -l, --nocheck       skips do_check function for given package(s)"
+        echo "  -c, --cleanbuild    cleans build before building package"
+        echo "  -d, --dirty         does not clean, even when build was successful"
+        echo "  -g, --ignore        does not exit after error"
+        echo "  -x, --nowarn        disables warning(s)"
+        echo "  -h, --help          displays this help and exit"
+        echo "  -v, --version       displays version and exit"
+        echo -e "\nExamples:"
+        echo "  pacman-src base     (re)compiles all packages from base group"
+        echo -e "  pacman-src bash -n  compiles and installs bash package without confirmation\n"
+        echo "Report bugs to https://github.com/tim241/pacman-src"
     fi
+}
+# Displays version
+#
+function _version() {
+    echo -e "pacman-src @VERSION@\n"
+    echo "Copyright (C) 2018 Tim Wanders"
+    echo -e "This is free software; see the source for copying conditions.\nThere is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+    echo "Written by Tim Wanders."
 }
 # Main build loop
 #
@@ -450,6 +466,7 @@ function _parse_short() {
                 g) _ignore_error=yes;;
                 x) _nowarn=yes;;
                 h) _usage; exit;;
+                v) _version; exit;;
                 *) _usage; exit 1;;
         esac
     done
@@ -478,6 +495,7 @@ do
         --ignore)       _ignore_error=yes;;
         --nowarn)       _nowarn=yes;;
         --help)         _usage; exit;;
+        --version)      _version; exit;;
         --*)            _usage; exit 1;;
         -*)             _parse_short "$_argument" ;;
         *)              _packages+=("$_argument");;
