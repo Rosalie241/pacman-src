@@ -28,7 +28,10 @@ _cached_found=no
 _cache=no
 _update=no
 _build_only=no
-_system_config_file="/etc/pacman-src.conf"
+if [ "x$_system_config_file" = "x" ]
+then
+    _system_config_file="/etc/pacman-src.conf"
+fi
 _init_cache_finished=no
 # Check XDG_CACHE_HOME
 # if empty, fall back to $HOME/.cache

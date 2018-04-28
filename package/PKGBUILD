@@ -24,7 +24,10 @@ pkgver() {
 
 build() {
     cd "$_pkgname"
+    # Fix incorrectly generating man page
+    export _system_config_file="src/conf/pacman-src.conf"
     make VERSION="$pkgver-git" -j1
+    unset  _system_config_file
 }
 
 package() {
