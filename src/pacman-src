@@ -388,9 +388,9 @@ function _check_cache() {
 function _usage() {
     if [ "$_quiet" = "no" ]
     then
-        echo -e "pacman-src compiles Arch GNU/Linux packages from source using the ABS\n"
+        echo -e "pacman-src compiles Arch GNU/Linux packages from source using the ABS\\n"
         echo "Usage: pacman-src [OPTION] [PACKAGE]"
-        echo -e "\nOptions:"
+        echo -e "\\nOptions:"
         echo "  -u, --update        updates the cache"
         echo "  -b. --build         build-only, no installing"
         echo "  -m, --cache         use the cache to store the built packages"
@@ -400,6 +400,7 @@ function _usage() {
         echo "  -t, --testing       builds the latest version of the given package(s)"
         echo "  -q, --quiet         silent mode"
         echo "  -Q, --search        searches the given package(s), returns 0 when found"
+        echo "  --config=[FILE]     uses configuration options from given config file"
         echo "  -k, --supdate       updates the cache without the linking process"
         echo "  -l, --nocheck       skips do_check function for given package(s)"
         echo "  -c, --cleanbuild    cleans build before building package"
@@ -408,18 +409,18 @@ function _usage() {
         echo "  -x, --nowarn        disables warning(s)"
         echo "  -h, --help          displays this help and exit"
         echo "  -v, --version       displays version and exit"
-        echo -e "\nExamples:"
+        echo -e "\\nExamples:"
         echo "  pacman-src base     (re)compiles all packages from base group"
-        echo -e "  pacman-src bash -n  compiles and installs bash package without confirmation\n"
+        echo -e "  pacman-src bash -n  compiles and installs bash package without confirmation\\n"
         echo "Report bugs to https://github.com/tim241/pacman-src"
     fi
 }
 # Displays version
 #
 function _version() {
-    echo -e "pacman-src @VERSION@\n"
+    echo -e "pacman-src @VERSION@\\n"
     echo "Copyright (C) 2018 Tim Wanders"
-    echo -e "This is free software; see the source for copying conditions.\nThere is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+    echo -e "This is free software; see the source for copying conditions.\\nThere is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\\n"
     echo "Written by Tim Wanders."
 }
 # Main build loop
@@ -445,6 +446,19 @@ function _build_loop() {
             _pkg_group=no
         fi
     done
+}
+# Sources given config file
+#
+function _use_config() {
+    _config="$(echo "$1" | cut -d'=' -f2)"
+    if [ -f "$_config" ] &&
+       [ "x$_config" != "x" ]
+    then
+        # shellcheck disable=SC1090
+        source "$_config"
+    else
+        _usage
+    fi    
 }
 # Short argument parser
 #
@@ -497,6 +511,7 @@ do
         --cache)        _cache=yes;;
         --ignore)       _ignore_error=yes;;
         --nowarn)       _nowarn=yes;;
+        --config=*)     _use_config "$_argument";;
         --help)         _usage; exit;;
         --version)      _version; exit;;
         --*)            _usage; exit 1;;
