@@ -10,7 +10,7 @@ do
 done
 pacman-src --noconfirm \
             --skipchecks --force \
-            --cleanbuild --nocheck $packages 
+            --cleanbuild --cache $packages 
 ```
 # How do I compile group(s)?
 * info: this is supported out of the box!
