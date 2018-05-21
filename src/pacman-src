@@ -342,6 +342,14 @@ function _pkg_info() {
     _old_pkg_dir="$_pkg_dir"  
     # shellcheck disable=SC1091
     source ./PKGBUILD 2> /dev/null
+    # Check if PKGBUILD has been patched already
+    # shellcheck disable=SC2016
+    if [ "x$(grep 'pkgver="${pkgver}_src"' PKGBUILD)" = "x" ]
+    then
+        pkgver="${pkgver}_src"
+        # shellcheck disable=SC2016
+        echo 'pkgver="${pkgver}_src"' >> ./PKGBUILD
+    fi
     # '$_pkg_arch' from _build_cd
     if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
     then
@@ -376,6 +384,11 @@ function _check_cache() {
     if [ -f "$_target_cache_dir/$_pkg_file" ]
     then
         _cached_found=yes
+        if [ "$(pacman -Qi "$1" | grep Version | cut -d':' -f2 | cut -d'-' -f1 | sed "s/ //g")" = "$pkgver" ]
+        then
+            _wprint "Package ${_color_blue}$1-$pkgver ${_color_white}has already been installed!"
+            return
+        fi
         _wprint "Package ${_color_blue}$1 ${_color_white}has been built already, installing cached version!"
         if ! sudo pacman "${_pacman_flags[@]}" -U "$_target_cache_dir/$_pkg_file"
         then
@@ -400,6 +413,7 @@ function _usage() {
         echo "  -t, --testing       builds the latest version of the given package(s)"
         echo "  -q, --quiet         silent mode"
         echo "  -Q, --search        searches the given package(s), returns 0 when found"
+        echo "  --reset             resets git repos from the cache"
         echo "  --config=[FILE]     uses configuration options from given config file"
         echo "  -k, --supdate       updates the cache without the linking process"
         echo "  -l, --nocheck       skips do_check function for given package(s)"
@@ -460,6 +474,20 @@ function _use_config() {
         _usage
     fi    
 }
+# Resets repos
+#
+function _reset() {
+    _wprint "Resetting repos"
+    for repo in "${_repos[@]}"
+    do
+        if [ -d "$_target_dir/packages/$repo" ]
+        then
+            cd "$_target_dir/packages/$repo" || return
+            _sprint "resetting ${_color_blue}$repo"
+            git reset --hard > /dev/null 2>&1
+        fi
+    done
+}
 # Short argument parser
 #
 function _parse_short() {
@@ -507,6 +535,7 @@ do
         --nocheck)      _makepkg_flags+=(--nocheck);;
         --testing)      _repo_testing=yes;;
         --dirty)        _clean=no;;
+        --reset)        _reset;;
         --force )       _makepkg_flags+=(-f); _pacman_flags+=(--force);;
         --cache)        _cache=yes;;
         --ignore)       _ignore_error=yes;;
@@ -543,7 +572,28 @@ do
     _start_search "$_package"
     _nowarn=no
 done
+# Remove duplicates
+if [ "${_packages[0]}" ]
+then  
+    _wprint "Searching for duplicate packages"
+fi
+for _package in "${_packages[@]}"
+do
+    for _dpackage in "${_dpackages[@]}"
+    do
+        if [ "$_dpackage" = "$_package" ]
+        then
+            _sprint "duplicate found: ${_color_blue}$_package"
+            _duplicate=yes
+        fi
+    done
+    if [ "$_duplicate" != "yes" ]
+    then
+        _stripped_packages+=("$_package")
+        _dpackages+=("$_package")
+    fi
+done
 _search_pkg_only=no
 # Start searching and building
-_build_loop "${_packages[@]}"
+_build_loop "${_stripped_packages[@]}"
 _build_loop "${_packages_group[@]}"
