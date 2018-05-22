@@ -323,46 +323,8 @@ function _checkreq() {
         fi
     fi
 }
-# Get package info
-#
-function _pkg_info() {
-    # '$_pkg_dir  ' from _start_search
-    if _real_pkg_dir=$(readlink "$_pkg_dir")
-    then
-        if [ "x$_real_pkg_dir" = "x$_old_pkg_dir" ]
-        then
-            return
-        fi  
-    else
-        if [ "x$_pkg_dir" = "x$_old_pkg_dir" ]
-        then
-            return
-        fi
-    fi
-    _old_pkg_dir="$_pkg_dir"  
-    # shellcheck disable=SC1091
-    source ./PKGBUILD 2> /dev/null
-    # Check if PKGBUILD has been patched already
-    # shellcheck disable=SC2016
-    if [ "x$(grep '${pkgver}_src' PKGBUILD)" = "x" ]
-    then
-        _wprint "Patching PKGBUILD"
-        _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
-        # Replace pkgver=* with pkgver=*_src
-        sed -i "s/pkgver=.*/pkgver=${pkgver}_src/g"             PKGBUILD
-        # Grep the pkgver function
-        _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1 2> /dev/null)"
-        # Check if grep found something
-        if [ "x$_line" != "x" ]
-        then
-            _sprint "changing pkgver function to a dummy function"
-            _rline=$(( $_line + 1 )) 2> /dev/null
-            sed -i "${_rline}s%.*%\techo ${pkgver}_src\n\treturn;%g" PKGBUILD
-        fi
-        pkgver="${pkgver}_src"
-        _sprint "generating new SRCINFO"
-        makepkg --printsrcinfo > .SRCINFO
-    fi
+# Get Package filename
+function _pkg_info_file() {
     # '$_pkg_arch' from _build_cd
     if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
     then
@@ -389,6 +351,50 @@ function _pkg_info() {
 
     else
         _err "failed to retrieve the filename for ${_color_blue}$1"
+    fi
+}
+# Get package info
+#
+function _pkg_info() {
+    _pkg_patch=no
+    # '$_pkg_dir  ' from _start_search
+    if _real_pkg_dir=$(readlink "$_pkg_dir")
+    then
+        if [ "x$_real_pkg_dir" = "x$_old_pkg_dir" ]
+        then
+            return
+        fi  
+    else
+        if [ "x$_pkg_dir" = "x$_old_pkg_dir" ]
+        then
+            return
+        fi
+    fi
+    _old_pkg_dir="$_pkg_dir"  
+    # shellcheck disable=SC1091
+    source ./PKGBUILD 2> /dev/null
+    # Check if PKGBUILD has been patched already
+    # shellcheck disable=SC2016
+    if [[ "$pkgver" != *"_src" ]]
+    then
+        _wprint "Patching PKGBUILD for ${_color_blue}$1"
+        sed -i s/'$pkgver'/"$pkgver"/g      PKGBUILD
+        sed -i s/'${pkgver}'/"$pkgver"/g    PKGBUILD 
+        _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
+        # Replace pkgver=* with pkgver=*_src
+        sed -i "s/pkgver=.*/pkgver=${pkgver}_src/g"             PKGBUILD
+        # Grep the pkgver function
+        _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1 2> /dev/null)"
+        # Check if grep found something
+        if [ "x$_line" != "x" ]
+        then
+            _sprint "changing pkgver function to dummy function"
+            _rline=$(( $_line + 1 )) 2> /dev/null
+            sed -i "${_rline}s%.*%\techo ${pkgver}_src\n\treturn;%g" PKGBUILD
+        fi
+        _sprint "generating SRCINFO"
+        makepkg --printsrcinfo > .SRCINFO
+        pkgver="${pkgver}_src"
     fi
 }
 # Checks if package has been built already 
@@ -463,7 +469,8 @@ function _build_loop() {
         _start_search "$_package"
         if [ "$_pkg_group" = "no" ]
         then
-            _pkg_info "$_package"
+            _pkg_info      "$_package"
+            _pkg_info_file "$_package"
             if [ "$_cache" = "yes" ]
             then
                 _check_cache "$_package"
