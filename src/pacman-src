@@ -356,7 +356,6 @@ function _pkg_info_file() {
 # Get package info
 #
 function _pkg_info() {
-    _pkg_patch=no
     # '$_pkg_dir  ' from _start_search
     if _real_pkg_dir=$(readlink "$_pkg_dir")
     then
@@ -389,8 +388,8 @@ function _pkg_info() {
         if [ "x$_line" != "x" ]
         then
             _sprint "changing pkgver function to dummy function"
-            _rline=$(( $_line + 1 )) 2> /dev/null
-            sed -i "${_rline}s%.*%\techo ${pkgver}_src\n\treturn;%g" PKGBUILD
+            _rline=$((_line++)) 2> /dev/null
+            sed -i "${_rline}s%.*%\\techo ${pkgver}_src\\n\\treturn;%g" PKGBUILD
         fi
         _sprint "generating SRCINFO"
         makepkg --printsrcinfo > .SRCINFO
