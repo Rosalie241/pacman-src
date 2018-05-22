@@ -344,11 +344,24 @@ function _pkg_info() {
     source ./PKGBUILD 2> /dev/null
     # Check if PKGBUILD has been patched already
     # shellcheck disable=SC2016
-    if [ "x$(grep 'pkgver="${pkgver}_src"' PKGBUILD)" = "x" ]
+    if [ "x$(grep '${pkgver}_src' PKGBUILD)" = "x" ]
     then
+        _wprint "Patching PKGBUILD"
+        _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
+        # Replace pkgver=* with pkgver=*_src
+        sed -i "s/pkgver=.*/pkgver=${pkgver}_src/g"             PKGBUILD
+        # Grep the pkgver function
+        _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1 2> /dev/null)"
+        # Check if grep found something
+        if [ "x$_line" != "x" ]
+        then
+            _sprint "changing pkgver function to a dummy function"
+            _rline=$(( $_line + 1 )) 2> /dev/null
+            sed -i "${_rline}s%.*%\techo ${pkgver}_src\n\treturn;%g" PKGBUILD
+        fi
         pkgver="${pkgver}_src"
-        # shellcheck disable=SC2016
-        echo 'pkgver="${pkgver}_src"' >> ./PKGBUILD
+        _sprint "generating new SRCINFO"
+        makepkg --printsrcinfo > .SRCINFO
     fi
     # '$_pkg_arch' from _build_cd
     if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
