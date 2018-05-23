@@ -379,9 +379,18 @@ function _pkg_info() {
         _wprint "Patching PKGBUILD for ${_color_blue}$1"
         sed -i s/'$pkgver'/"$pkgver"/g      PKGBUILD
         sed -i s/'${pkgver}'/"$pkgver"/g    PKGBUILD 
-        _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
         # Replace pkgver=* with pkgver=*_src
-        sed -i "s/pkgver=.*/pkgver=${pkgver}_src/g"             PKGBUILD
+        _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
+        _pkgbuild_data="$(cat PKGBUILD)"
+        while read line 
+        do
+            if [[ "$line" = "pkgver="* ]]
+            then
+                echo -e "pkgver=${pkgver}_src"
+            else
+                echo -e "$line"
+            fi
+        done < <(echo "$_pkgbuild_data") > PKGBUILD
         # Grep the pkgver function
         _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1 2> /dev/null)"
         # Check if grep found something
