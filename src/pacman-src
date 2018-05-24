@@ -23,7 +23,6 @@ _pkg_file=none
 _pkg_arch=none
 _newline=yes
 _search_only=no
-_small_update=no
 _cached_found=no
 _cache=no
 _update=no
@@ -126,7 +125,6 @@ function _init_cache() {
             git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir"
         done
         _update_symlinks 
-        _init_cache_finished=yes
     fi
 }
 # Update the cache
@@ -139,41 +137,6 @@ function _update_cache() {
         _sprint "updating ${_color_blue}$repo ${_color_white}repo"
         git fetch --all "${_git_flags[@]}" > /dev/null
         git reset --hard                   > /dev/null
-    done
-}
-# Update symlinks
-#
-function _update_symlinks() {
-    _wprint "Updating symlinks"
-    for _repo in "${_repos[@]}"
-    do
-        _target_repo_dir="$_target_dir/packages/$_repo"
-        find "$_target_repo_dir" -name "PKGBUILD" 2> /dev/null | while read -r _package
-        do
-            # Disable warnings
-            # shellcheck disable=SC1090
-            source "$_package" 2>/dev/null
-            # shellcheck disable=SC2154            
-            for _item in "${pkgname[@]}"
-            do 
-                if [[ $_package != *repos* ]]
-                then
-                    _item="$(echo    "$_item"    | rev | cut -d'/' -f2 | rev)"
-                    _package="$(echo "$_package" | rev | cut -d'/' -f3 | rev)"
-                    _source="$_target_repo_dir/$_package"
-                    _target="$_target_repo_dir/$_item"
-                    if [ ! -d "$_target" ] && \
-                        [ ! -f "$_source" ] && \
-                        [ "$_source" != "$_target" ]
-                    then
-                        _newline=no
-                        _sprint "${_color_white}Linking ${_color_yel}$_source ${_color_white}to ${_color_blue}$_target"
-                        _newline=yes
-                        ln -s "$_source" "$_target"
-                    fi
-                fi
-            done
-        done
     done
 }
 function _build_cd () {
@@ -201,9 +164,9 @@ function _build_cd () {
 # Search the package
 #
 function _start_search() {
+    _pkgname="$1"
     for repo in "${_repos[@]}"
     do
-        _pkgname=$1
         _pkg_dir="$_target_dir/packages/$repo/$_pkgname"
         if [ -d "$_pkg_dir" ]
         then
@@ -223,6 +186,31 @@ function _start_search() {
     done
     if [ "$_pkg_not_found" = "yes" ]
     then
+        for repo in "${_repos[@]}"
+        do
+            _repo_dir="$_target_dir/packages/$repo/"
+            while read -r __package
+            do
+                _package_pkgbuild="$(echo "$__package" | cut -d':' -f1)"
+                [ -f "$_package_pkgbuild" ] && source "$_package_pkgbuild" 2> /dev/null
+                for _package_name in "${pkgname[@]}" "${provides[@]}" "${pkgbase[@]}"
+                do
+                    if [ -d "$_repo_dir/$_package_name" ]
+                    then
+                        _pkgname="$_package_name"
+                        if [ "$_repo_testing" = "yes" ]
+                        then
+                            _repo_version="testing"
+                            _build_cd "${_testing_repos[@]}"
+                        else
+                            _repo_version="stable"
+                            _build_cd "${_stable_repos[@]}"
+                        fi
+                        return
+                    fi
+                done
+            done < <(grep -EH "pkgname=.*$_pkgname" "$_repo_dir"/*/repos/*/PKGBUILD)
+        done
         if _group_packages="$(pacman -Qqg "$1" 2>/dev/null)"
         then
             if [ "$_search_pkg_only" = "no" ]
@@ -490,7 +478,6 @@ function _usage() {
         echo "  -Q, --search        searches the given package(s), returns 0 when found"
         echo "  --reset             resets git repos from the cache"
         echo "  --config=[FILE]     uses configuration options from given config file"
-        echo "  -k, --supdate       updates the cache without the linking process"
         echo "  -l, --nocheck       skips do_check function for given package(s)"
         echo "  -c, --cleanbuild    cleans build before building package"
         echo "  -d, --dirty         does not clean, even when build was successful"
@@ -575,7 +562,6 @@ function _parse_short() {
                 q) _quiet=yes;;
                 Q) _search_only=yes;;
                 u) _update=yes;;
-                k) _small_update=yes; _update=yes;;
                 s) _makepkg_flags+=(--skipinteg);;
                 n) _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
                 c) _makepkg_flags+=(--cleanbuild);;
@@ -604,7 +590,6 @@ do
         --quiet)        _quiet=yes;;
         --search)       _search_only=yes;;
         --update)       _update=yes;;
-        --supdate)      _small_update=yes; _update=yes;;
         --skipchecks)   _makepkg_flags+=(--skipinteg);;
         --noconfirm)    _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
         --cleanbuild)   _makepkg_flags+=(--cleanbuild);;
@@ -626,15 +611,7 @@ do
 done
 _checkreq
 _init_cache
-if [ "$_update" = "yes" ]
-then
-    _update_cache
-    if [ "$_small_update" = "no" ] &&
-        [ "$_init_cache_finished" = "no" ]
-    then
-        _update_symlinks
-    fi
-fi
+[ "$_update" = "yes" ] && _update_cache
 # Search all packages before building
 if [ "${_packages[0]}" ]
 then  
@@ -649,7 +626,7 @@ do
     _nowarn=no
 done
 # Remove duplicates
-if [ "${_packages[0]}" ]
+if [ "${_packages[1]}" ]
 then  
     _wprint "Searching for duplicate packages"
 fi
