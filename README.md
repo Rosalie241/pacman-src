@@ -1,6 +1,6 @@
 # pacman-src 
-* read the manpage for more details!
-* read the FAQ [here](docs/faq.md)
+* read the markdown man page [here](docs/man.md)
+* read the faq [here](docs/faq.md)
 # Examples
  * `pacman-src base base-devel`
  * `pacman-src vim`
