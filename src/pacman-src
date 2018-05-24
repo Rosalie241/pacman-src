@@ -326,11 +326,15 @@ function _checkreq() {
 # Get Package filename
 function _pkg_info_file() {
     # '$_pkg_arch' from _build_cd
-    if _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_pkg_arch" | head -1)$PKGEXT"
+    if _pkg_file="$(makepkg --packagelist | grep "$1" \
+                | grep "$_pkg_arch" \
+                | head -1)$PKGEXT"
     then
         for _arch in "${_repo_archs[@]}"
         do
-            _pkg_file="$(makepkg --packagelist | grep "$1" | grep "$_arch" | head -1)$PKGEXT"
+            _pkg_file="$(makepkg --packagelist | grep "$1" \
+                        | grep "$_arch" \
+                        | head -1)$PKGEXT"
             if [ "$_pkg_file" != "$PKGEXT" ]
             then
                 return
@@ -398,13 +402,13 @@ function _pkg_info() {
         # pkgver=1.0_src \n origpkgver=1.0
         _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
         _pkgbuild_data="$(cat PKGBUILD)"
-        while read line 
+        while read -r line 
         do
             if [[ "$line" = "pkgver="* ]]
             then
-                echo -e "pkgver=${pkgver}_src\norigpkgver=$pkgver"
+                echo -e "pkgver=${pkgver}_src\\norigpkgver=$pkgver"
             else
-                echo -e "$line"
+                echo "$line"
             fi
         done < <(echo "$_pkgbuild_data") > PKGBUILD
         # Example pkgver function
@@ -414,7 +418,7 @@ function _pkg_info() {
         # } 
         # =
         # pkgver() {
-        #   echo 1.0_src
+        #   echo '1.0_src'
         #   return
         #   echo 1.1
         # }
@@ -422,11 +426,12 @@ function _pkg_info() {
         # Grep the pkgver function
         _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1 2> /dev/null)"
         # Check if grep found something
-        if [ "x$_line" != "x" ]
+        if _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1)" && \
+            [ "x$_line" != "x" ]
         then
             _sprint "changing pkgver function to dummy function"
-            _rline=$((_line++)) 2> /dev/null
-            sed -i "${_rline}s%.*%\\techo ${pkgver}_src\\n\\treturn;%g" PKGBUILD
+            _rline=$((_line + 1)) 2> /dev/null
+            sed -i "${_rline}s^.*^echo \\'${pkgver}_src\\'\\nreturn;^g" PKGBUILD
         fi
         _sprint "generating SRCINFO"
         makepkg --printsrcinfo > .SRCINFO
