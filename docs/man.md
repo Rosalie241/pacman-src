@@ -1,6 +1,6 @@
-
+```
 pacman-src compiles Arch GNU/Linux packages from source using the ABS
-
+```
 Usage
 -----
 
@@ -23,7 +23,6 @@ Name | Description
 `-Q, --search` | searches the given package(s), returns 0 when found
 `--reset` | resets git repos from the cache
 `--config=[FILE]` | uses configuration options from given config file
-`-k, --supdate` | updates the cache without the linking process
 `-l, --nocheck` | skips do_check function for given package(s)
 `-c, --cleanbuild` | cleans build before building package
 `-d, --dirty` | does not clean, even when build was successful
@@ -39,5 +38,6 @@ Name | Description
 `pacman-src base` | (re)compiles all packages from base group
 `pacman-src bash -n` | compiles and installs bash package without confirmation
 
+### Bugs
 Report bugs to https://github.com/tim241/pacman-src
 
