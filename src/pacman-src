@@ -377,20 +377,48 @@ function _pkg_info() {
     if [[ "$pkgver" != *"_src" ]]
     then
         _wprint "Patching PKGBUILD for ${_color_blue}$1"
-        sed -i s/'$pkgver'/"$pkgver"/g      PKGBUILD
-        sed -i s/'${pkgver}'/"$pkgver"/g    PKGBUILD 
-        # Replace pkgver=* with pkgver=*_src
+        # Example code for this pkgver change
+        # Example pkgver=1.0
+        #
+        # source=('example.com/files/$pkgname-$pkgver')
+        # =
+        # source=('example.com/files/${pkgname}-1.0')
+        sed -i s/'$pkgver'/"$pkgver"/g          PKGBUILD
+        # source=('example.com/files/${pkgname}_${pkgver}')
+        # =
+        # source=('example.com/files/${pkgname}_1.0')
+        sed -i s/'${pkgver}'/"$pkgver"/g        PKGBUILD
+        # source=('example.com/files/${pkgname}_${pkgver//./_}')
+        # =
+        # source=('example.com/files/${pkgname}_${origpkgver//./_}')
+        sed -i s/'${pkgver'/'${origpkgver'/g    PKGBUILD
+        #
+        # pkgver=1.0
+        # =
+        # pkgver=1.0_src \n origpkgver=1.0
         _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
         _pkgbuild_data="$(cat PKGBUILD)"
         while read line 
         do
             if [[ "$line" = "pkgver="* ]]
             then
-                echo -e "pkgver=${pkgver}_src"
+                echo -e "pkgver=${pkgver}_src\norigpkgver=$pkgver"
             else
                 echo -e "$line"
             fi
         done < <(echo "$_pkgbuild_data") > PKGBUILD
+        # Example pkgver function
+        #
+        # pkgver() {
+        #   echo 1.1
+        # } 
+        # =
+        # pkgver() {
+        #   echo 1.0_src
+        #   return
+        #   echo 1.1
+        # }
+        #
         # Grep the pkgver function
         _line="$(grep "pkgver*.*() {" PKGBUILD -n | cut -d':' -f1 2> /dev/null)"
         # Check if grep found something
