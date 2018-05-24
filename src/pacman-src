@@ -402,14 +402,29 @@ function _pkg_info() {
         # pkgver=1.0_src \n origpkgver=1.0
         _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
         _pkgbuild_data="$(cat PKGBUILD)"
+        _in_func=no
+        _echo=yes
         while read -r line 
         do
-            if [[ "$line" = "pkgver="* ]]
-            then
-                echo -e "pkgver=${pkgver}_src\\norigpkgver=$pkgver"
-            else
-                echo "$line"
-            fi
+            # if the line contains pkgver= then replace and add
+            # pkgver=[VERSION]_src
+            # origpkgver=[VERSION]
+            [[ "$line" = "pkgver="* ]] && echo -e "pkgver=${pkgver}_src\\norigpkgver=$pkgver" && _echo=no
+            # 
+            # If _in_func_next = yes then set _in_func to yes
+            [ "$_in_func_next" = "yes" ] && _in_func=yes
+            #
+            # If the line contains '{' add \t at the next line
+            [[ "$line" = *"{" ]] && _in_func_next=yes && _in_func=no
+            #
+            # If the line contains '}' do not add \t to the line 
+            [[ "$line" = "}"* ]] && _in_func=no && _echo=yes
+            #
+            # if it's in the function, add \t before the text
+            [ "$_in_func" = "yes" ] && echo -e "\\t$line" && _echo=no
+            #
+            # If _echo = yes then show the original line without additions
+            [ "$_echo" = "yes" ] && echo "$line" || _echo=yes
         done < <(echo "$_pkgbuild_data") > PKGBUILD
         # Example pkgver function
         #
