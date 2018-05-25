@@ -123,8 +123,7 @@ function _init_cache() {
         do
             _git_clone_dir="$(echo "$_git_link" | rev | cut -d'/' -f1 | rev | sed "s/.git//g")"
             git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir"
-        done
-        _update_symlinks 
+        done 
     fi
 }
 # Update the cache
