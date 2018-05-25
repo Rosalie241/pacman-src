@@ -31,7 +31,6 @@ if [ "x$_system_config_file" = "x" ]
 then
     _system_config_file="/etc/pacman-src.conf"
 fi
-_init_cache_finished=no
 # Check XDG_CACHE_HOME
 # if empty, fall back to $HOME/.cache
 if [ ! "$XDG_CACHE_HOME" ]
@@ -191,7 +190,14 @@ function _start_search() {
             while read -r __package
             do
                 _package_pkgbuild="$(echo "$__package" | cut -d':' -f1)"
-                [ -f "$_package_pkgbuild" ] && source "$_package_pkgbuild" 2> /dev/null
+                if [ -f "$_package_pkgbuild" ] 
+                then
+                    # shellcheck disable=SC2164
+                    cd "$(dirname "$_package_pkgbuild")"
+                    # shellcheck disable=SC1090
+                    source "$_package_pkgbuild" 2> /dev/null
+                fi
+                # shellcheck disable=SC2154
                 for _package_name in "${pkgname[@]}" "${provides[@]}" "${pkgbase[@]}"
                 do
                     if [ -d "$_repo_dir/$_package_name" ]
@@ -208,7 +214,9 @@ function _start_search() {
                         return
                     fi
                 done
-            done < <(grep -EH "pkgname=.*$_pkgname" "$_repo_dir"/*/repos/*/PKGBUILD)
+            done < <(LC_ALL=C; \
+                grep -EH "pkgname=.*$_pkgname.*" "$_repo_dir"/*/repos/*/PKGBUILD || \
+                grep -EH "pkgbase=.*$(echo "$_pkgname" | cut -d'-' -f1).*" "$_repo_dir"/*/repos/*/PKGBUILD)
         done
         if _group_packages="$(pacman -Qqg "$1" 2>/dev/null)"
         then
