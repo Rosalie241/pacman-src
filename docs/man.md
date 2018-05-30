@@ -28,6 +28,7 @@ Name | Description
 `-d, --dirty` | does not clean, even when build was successful
 `-g, --ignore` | does not exit after error
 `-x, --nowarn` | disables warning(s)
+`--verbose` | shows debug data
 `-h, --help` | displays this help and exit
 `-v, --version` | displays version and exit
 

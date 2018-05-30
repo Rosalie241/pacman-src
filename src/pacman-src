@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Default 
+_verbose=no
 _pkg_group=no
 _pkg_file=none
 _pkg_arch=none
@@ -71,7 +72,6 @@ function _print() {
             echo -e "$*"
         fi
     fi
-    return
 }
 # Print white text
 function _wprint() {
@@ -86,6 +86,15 @@ function _warnprint() {
     if [ "$_nowarn" = "no" ]
     then
         _print "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}$*${_color_reset}"
+    fi
+}
+# Print log info
+function _log() {
+    if [ "$_verbose" = "yes" ]
+    then
+        _newline=no
+        _print "${_color_white}[DEBUG] $*${_color_reset}"
+        _newline=yes
     fi
 }
 # Print sub info
@@ -107,10 +116,14 @@ function _err() {
 #
 function _init_cache() {
     _repo_dir_clone=no
+    _log "checking if all repos exist"
     for _repo_dir in "${_repos[@]}"
     do
+        _target_repo_dir="$_target_dir/packages/$_repo_dir"
+        _log "checking if '$_target_repo_dir' exists"
         if [ ! -d "$_target_dir/packages/$_repo_dir" ]
         then
+            _log "'$_target_repo_dir' not found"
             _repo_dir_clone=yes
         fi
     done
@@ -121,7 +134,11 @@ function _init_cache() {
         for _git_link in "${_repo_git_links[@]}"
         do
             _git_clone_dir="$(echo "$_git_link" | rev | cut -d'/' -f1 | rev | sed "s/.git//g")"
-            git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir"
+            if [ ! -d "$_target_dir/packages/$_git_clone_dir" ]
+            then
+                _log "Cloning '$_git_link' to '$_target_dir/packages/$_git_clone_dir'"
+                git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir"
+            fi
         done 
     fi
 }
@@ -145,16 +162,22 @@ function _build_cd () {
         for _repo in "$@"
         do
             _target_build_dir="$_target_dir/packages/$repo/$_pkgname/repos/$_repo-$_arch"
+            _log "checking if '$_target_build_dir' exists"
             if [ -d "$_target_build_dir" ]
             then
+                _log "'$_target_build_dir' exists"
                 _found_dir=true
                 _pkg_arch="$_arch"
                 cd "$_target_build_dir" || exit 1
+                break
+            else
+                _log "'$_target_build_dir' does not exist"
             fi
         done
     done
     if [ "$_found_dir" = "false" ]
     then
+        _log "package not found in any repos, defaulting to trunk"
         _warnprint "${_color_blue}$_pkgname ${_color_white}not found in the ${_color_blue}$_repo_version ${_color_white}repos, building latest.."
         cd "$_target_dir/packages/$repo/$_pkgname/trunk" || exit 1
     fi
@@ -163,17 +186,23 @@ function _build_cd () {
 #
 function _start_search() {
     _pkgname="$1"
+    _pkgname_pacman_src_real="$_pkgname"
     for repo in "${_repos[@]}"
     do
         _pkg_dir="$_target_dir/packages/$repo/$_pkgname"
+        _log "checking if '$_pkg_dir' exists"
         if [ -d "$_pkg_dir" ]
         then
+            _log "'$_pkg_dir' found"
             _pkg_not_found=no
+            _log "checking what repos are enabled"
             if [ "$_repo_testing" = "yes" ]
             then
+                _log "testing repos are enabled"
                 _repo_version="testing"
                 _build_cd "${_testing_repos[@]}"
             else
+                _log "stable repos are enabled"
                 _repo_version="stable"
                 _build_cd "${_stable_repos[@]}"
             fi
@@ -184,30 +213,59 @@ function _start_search() {
     done
     if [ "$_pkg_not_found" = "yes" ]
     then
+        _log "package not found, searching in a different way"
         for repo in "${_repos[@]}"
         do
+            _log "searching package in the '$repo' repo using grep"
             _repo_dir="$_target_dir/packages/$repo/"
             while read -r __package
             do
                 _package_pkgbuild="$(echo "$__package" | cut -d':' -f1)"
+                _package_pkgname_found=no
+                _log "checking if '$_package_pkgbuild' exists"
                 if [ -f "$_package_pkgbuild" ] 
                 then
+                    _log "'$_package_pkgbuild' found"
                     # shellcheck disable=SC2164
                     cd "$(dirname "$_package_pkgbuild")"
+                    _log "sourcing '$_package_pkgbuild'"
                     # shellcheck disable=SC1090
                     source "$_package_pkgbuild" 2> /dev/null
                 fi
+                # Override _pkgname if defined in PKGBUILD
+                _pkgname="$_pkgname_pacman_src_real"
+                _log "checking if pkgname, provides or pkgbase array contain package"
                 # shellcheck disable=SC2154
                 for _package_name in "${pkgname[@]}" "${provides[@]}" "${pkgbase[@]}"
                 do
+                    _log "checking if '$_package_name' is '$_pkgname'"
+                    if [ "$_package_name" = "$_pkgname" ] 
+                    then 
+                        _log "'$_package_name' is '$_pkgname'"
+                        _package_pkgname_found=yes 
+                        break
+                    else
+                        _log "'$_package_name' is not '$_pkgname'"
+                    fi
+                done
+                # shellcheck disable=SC2154
+                for _package_name in "${pkgname[@]}" "${provides[@]}" "${pkgbase[@]}"
+                do
+                    [ "$_package_pkgname_found" = "no" ] && break
+
+                    _log "checking if '$_repo_dir/$_package_name' exists"
                     if [ -d "$_repo_dir/$_package_name" ]
                     then
+                        _log "'$_repo_dir/$_package_name' exists"
                         _pkgname="$_package_name"
+                        _log "checking what repos are enabled"
                         if [ "$_repo_testing" = "yes" ]
                         then
+                            _log "testing repos are enabled"
                             _repo_version="testing"
                             _build_cd "${_testing_repos[@]}"
                         else
+                            _log "stable repos are enabled"
                             _repo_version="stable"
                             _build_cd "${_stable_repos[@]}"
                         fi
@@ -233,6 +291,12 @@ function _start_search() {
         fi
     fi
 }
+# Cleans the package
+#
+function _pkg_clean() {
+    _wprint "Cleaning ${_color_blue}$1"
+    git clean -fdxq
+}
 # Start the build using makepkg
 #
 function _start_build() {
@@ -251,6 +315,7 @@ function _start_build() {
         fi
         export PKGDEST="$_target_cache_dir"
     fi
+    [ "$_cleanbuild" = "yes" ] && _pkg_clean "$1"
     if makepkg "${_makepkg_flags[@]}"
     then        
         if [ "$_build_only" = "no" ]
@@ -261,11 +326,7 @@ function _start_build() {
                 _err "Installing ${_color_blue}$1 ${_color_white}failed!"
             fi
         fi
-        if [ "$_clean" = "yes" ]
-        then
-            _wprint "Cleaning ${_color_blue}$1"
-            git clean -fdxq
-        fi
+        [ "$_clean" = "yes" ] && _pkg_clean "$1"
         return
     else
         _err "Building ${_color_blue}$1 ${_color_white}failed!"
@@ -321,34 +382,39 @@ function _checkreq() {
 # Get Package filename
 function _pkg_info_file() {
     # '$_pkg_arch' from _build_cd
+    _log "searching filename of package"
     if _pkg_file="$(makepkg --packagelist | grep "$1" \
                 | grep "$_pkg_arch" \
                 | head -1)$PKGEXT"
     then
         for _arch in "${_repo_archs[@]}"
         do
+            _log "searching '$1' filename for architecture '$_arch'"
             _pkg_file="$(makepkg --packagelist | grep "$1" \
                         | grep "$_arch" \
                         | head -1)$PKGEXT"
             if [ "$_pkg_file" != "$PKGEXT" ]
             then
+                _log "filename found: '$_pkg_file'"
                 return
+            else
+                _log "filename not found, retrying"
             fi
         done
-        # Extra sanity check
-        if [ "$_pkg_file" = "$PKGEXT" ]
+        _log "searching filename without architecture"
+        _warnprint "cannot find architecture for ${_color_blue}$1"
+        _pkg_file="$(makepkg --packagelist | grep "$1" | head -1)$PKGEXT"
+        # return if _pkg_file has a value
+        if [ "$_pkg_file" != "$PKGEXT" ] 
         then
-            _warnprint "cannot find architecture for ${_color_blue}$1"
-            _pkg_file="$(makepkg --packagelist | grep "$1" | head -1)$PKGEXT"
-            if [ "$_pkg_file" = "$PKGEXT" ]
-            then
-                _err "failed to retrieve the filename for ${_color_blue}$1"
-            else
-                return
-            fi
+            _log "filename found: '$_pkg_file'"
+            return
+        else
+            _log "filename not found"
+            _err "failed to retrieve the filename for ${_color_blue}$1"
         fi
-
     else
+        _log "filename not found"
         _err "failed to retrieve the filename for ${_color_blue}$1"
     fi
 }
@@ -356,7 +422,7 @@ function _pkg_info_file() {
 #
 function _pkg_info() {
     # '$_pkg_dir  ' from _start_search
-    if _real_pkg_dir=$(readlink "$_pkg_dir")
+    if _real_pkg_dir="$(readlink "$_pkg_dir")"
     then
         if [ "x$_real_pkg_dir" = "x$_old_pkg_dir" ]
         then
@@ -368,13 +434,17 @@ function _pkg_info() {
             return
         fi
     fi
-    _old_pkg_dir="$_pkg_dir"  
+    _old_pkg_dir="$_pkg_dir"
+    # Make sure pkgver is empty
+    unset pkgver 
     # shellcheck disable=SC1091
     source ./PKGBUILD 2> /dev/null
     # Check if PKGBUILD has been patched already
+    _log "checking if PKGBUILD has been patched"
     # shellcheck disable=SC2016
     if [[ "$pkgver" != *"_src" ]]
     then
+        _log "PKGBUILD has not been patched, patching"
         _wprint "Patching PKGBUILD for ${_color_blue}$1"
         # Example code for this pkgver change
         # Example pkgver=1.0
@@ -398,6 +468,7 @@ function _pkg_info() {
         _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
         _pkgbuild_data="$(cat PKGBUILD)"
         _in_func=no
+        _in_func_next=no
         _echo=yes
         while read -r line 
         do
@@ -446,24 +517,33 @@ function _pkg_info() {
         _sprint "generating SRCINFO"
         makepkg --printsrcinfo > .SRCINFO
         pkgver="${pkgver}_src"
+    else
+        _log "PKGBUILD has been patched already"
     fi
 }
 # Checks if package has been built already 
 #
 function _check_cache() {
+    _log "checking cache for '$_pkg_file'"
     if [ -f "$_target_cache_dir/$_pkg_file" ]
     then
+        _log "'$_pkg_file' found"
         _cached_found=yes
+        _log "checking if package has been installed already"
         if [ "$(pacman -Qi "$1" | grep Version | cut -d':' -f2 | cut -d'-' -f1 | sed "s/ //g")" = "$pkgver" ]
         then
+            _log "package has been installed already"
             _wprint "Package ${_color_blue}$1-$pkgver ${_color_white}has already been installed!"
             return
         fi
+        _log "package has not been installed, insalling '$_pkg_file'"
         _wprint "Package ${_color_blue}$1 ${_color_white}has been built already, installing cached version!"
         if ! sudo pacman "${_pacman_flags[@]}" -U "$_target_cache_dir/$_pkg_file"
         then
             _err "Failed to install ${_color_blue}$1"
         fi
+    else
+        _log "'$_pkg_file' not found in cache"
     fi
 }
 # Displays usage
@@ -490,6 +570,7 @@ function _usage() {
         echo "  -d, --dirty         does not clean, even when build was successful"
         echo "  -g, --ignore        does not exit after error"
         echo "  -x, --nowarn        disables warning(s)"
+        echo "  --verbose           shows debug data"
         echo "  -h, --help          displays this help and exit"
         echo "  -v, --version       displays version and exit"
         echo -e "\\nExamples:"
@@ -571,7 +652,7 @@ function _parse_short() {
                 u) _update=yes;;
                 s) _makepkg_flags+=(--skipinteg);;
                 n) _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
-                c) _makepkg_flags+=(--cleanbuild);;
+                c) _makepkg_flags+=(--cleanbuild); _cleanbuild=yes;;
                 t) _repo_testing=yes;;
                 d) _clean=no;;
                 f) _makepkg_flags+=(-f); _pacman_flags+=(--force);;
@@ -599,7 +680,7 @@ do
         --update)       _update=yes;;
         --skipchecks)   _makepkg_flags+=(--skipinteg);;
         --noconfirm)    _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
-        --cleanbuild)   _makepkg_flags+=(--cleanbuild);;
+        --cleanbuild)   _makepkg_flags+=(--cleanbuild); _cleanbuild=yes;;
         --nocheck)      _makepkg_flags+=(--nocheck);;
         --testing)      _repo_testing=yes;;
         --dirty)        _clean=no;;
@@ -609,6 +690,7 @@ do
         --ignore)       _ignore_error=yes;;
         --nowarn)       _nowarn=yes;;
         --config=*)     _use_config "$_argument";;
+        --verbose)      _verbose=yes;;
         --help)         _usage; exit;;
         --version)      _version; exit;;
         --*)            _usage; exit 1;;
