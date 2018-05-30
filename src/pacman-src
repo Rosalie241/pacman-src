@@ -503,7 +503,7 @@ function _pkg_info() {
         then
             _sprint "changing pkgver function to dummy function"
             _rline=$((_line + 1)) 2> /dev/null
-            sed -i "${_rline}s^.*^echo \\'${pkgver}_src\\'\\nreturn;^g" PKGBUILD
+            sed -i "${_rline}s^.*^\\techo \\'${pkgver}_src\\'\\n\\treturn\\n^g" PKGBUILD
         fi
         _sprint "generating SRCINFO"
         makepkg --printsrcinfo > .SRCINFO
