@@ -367,17 +367,6 @@ function _checkreq() {
         fi
         unset ID
     fi
-    if [ ! -f "/etc/makepkg.conf" ]
-    then
-        _err "makepkg.conf not found!"
-    else
-        # shellcheck disable=SC1091
-        source "/etc/makepkg.conf"
-        if [ ! "$PKGEXT" ]
-        then
-            _err "PKGEXT is empty!"
-        fi
-    fi
 }
 # Get Package filename
 function _pkg_info_file() {
@@ -385,15 +374,16 @@ function _pkg_info_file() {
     _log "searching filename of package"
     if _pkg_file="$(makepkg --packagelist | grep "$1" \
                 | grep "$_pkg_arch" \
-                | head -1)$PKGEXT"
+                | head -1)"
     then
         for _arch in "${_repo_archs[@]}"
         do
             _log "searching '$1' filename for architecture '$_arch'"
             _pkg_file="$(makepkg --packagelist | grep "$1" \
                         | grep "$_arch" \
-                        | head -1)$PKGEXT"
-            if [ "$_pkg_file" != "$PKGEXT" ]
+                        | head -1)"
+            _pkg_file="$(basename "$_pkg_file")"            
+            if [ "x$_pkg_file" != "x" ]
             then
                 _log "filename found: '$_pkg_file'"
                 return
@@ -403,9 +393,10 @@ function _pkg_info_file() {
         done
         _log "searching filename without architecture"
         _warnprint "cannot find architecture for ${_color_blue}$1"
-        _pkg_file="$(makepkg --packagelist | grep "$1" | head -1)$PKGEXT"
+        _pkg_file="$(makepkg --packagelist | grep "$1" | head -1)"
+        _pkg_file="$(basename "$_pkg_file")"
         # return if _pkg_file has a value
-        if [ "$_pkg_file" != "$PKGEXT" ] 
+        if [ "x$_pkg_file" != "x" ] 
         then
             _log "filename found: '$_pkg_file'"
             return
