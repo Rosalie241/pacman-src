@@ -482,7 +482,7 @@ function _pkg_info() {
             #
             # If _echo = yes then show the original line without additions
             [ "$_echo" = "yes" ] && echo "$line" || _echo=yes
-        done < <(echo "$_pkgbuild_data") > PKGBUILD
+        done < <(echo -e "$_pkgbuild_data\\n") > PKGBUILD
         # Example pkgver function
         #
         # pkgver() {
