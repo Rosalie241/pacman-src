@@ -769,21 +769,26 @@ then
 fi
 for _package in "${_packages[@]}"
 do
+    _log "checking if '$_package' is in '${_dpackages[@]}'"
     for _dpackage in "${_dpackages[@]}"
     do
         if [ "$_dpackage" = "$_package" ]
         then
+            _log "'$_package' found"
             _sprint "duplicate found: ${_color_blue}$_package"
             _duplicate=yes
         fi
     done
     if [ "$_duplicate" != "yes" ]
     then
+        _log "adding '$_package' to _stripped_packages and _dpackages"
         _stripped_packages+=("$_package")
         _dpackages+=("$_package")
     fi
 done
 _search_pkg_only=no
 # Start searching and building
+_log "running main build loop over _stripped_packages (packages)"
 _build_loop "${_stripped_packages[@]}"
+_log "running main build loop over _packages_group (groups)"
 _build_loop "${_packages_group[@]}"
