@@ -79,7 +79,7 @@ function _wprint() {
 }
 # Print red error text
 function _errprint() {
-    _print "${_color_red}=>> ERROR:${_color_reset} ${_color_white}$*${_color_reset}"
+    _print "${_color_red}=>> ERROR:${_color_reset} ${_color_white}$*${_color_reset}" >&2
 }
 # Print yellow warning text
 function _warnprint() {
