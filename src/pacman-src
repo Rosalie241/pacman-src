@@ -435,6 +435,7 @@ function _pkg_info() {
     # shellcheck disable=SC2016
     if [[ "$pkgver" != *"_src" ]]
     then
+        [ ! -f "PKGBUILD.orig" ] && cp PKGBUILD PKGBUILD.orig
         _log "PKGBUILD has not been patched, patching"
         _wprint "Patching PKGBUILD for ${_color_blue}$1"
         # Example code for this pkgver change
@@ -460,6 +461,8 @@ function _pkg_info() {
         _pkgbuild_data="$(cat PKGBUILD)"
         _in_func=no
         _in_func_next=no
+        _input_char_active=no
+        _pkgbuild_patch_fail=no
         _echo=yes
         while read -r line 
         do
@@ -472,10 +475,55 @@ function _pkg_info() {
             [ "$_in_func_next" = "yes" ] && _in_func=yes
             #
             # If the line contains '{' add \t at the next line
-            [[ "$line" = *"{" ]] && _in_func_next=yes && _in_func=no
+            if [[ "$line" = *"{" ]] && \
+                [ "$_input_char_active" = "no" ]
+            then 
+                _in_func_next=yes 
+                _in_func=no
+            fi
             #
             # If the line contains '}' do not add \t to the line 
-            [[ "$line" = "}"* ]] && _in_func=no && _echo=yes
+            if [[ "$line" = "}"* ]] && \
+                [ "$_input_char_active" = "no" ]
+            then 
+                _in_func=no
+                _echo=yes
+            fi
+            #
+            # If _input_next_line = yes then no \t
+            [[ "$_input_next_line" = "yes" ]] && _in_func=no
+            #
+            # If the line contains the _input_char_name then add \t to the next line
+            if [[ "$line" = "$_input_char_name" ]] && \
+                [[ "x$_input_char_name" != "x" ]]
+            then 
+                _in_func_next=yes
+                _input_next_line=no
+                _input_char_active=no
+                unset _input_char_name
+            fi
+            # 
+            # If the line contains '<<' do not add \t to the next line
+            if [[ "$line" = *"<<"* ]] && \
+                [[ "$line" != *"'<<'"* ]] && \
+                [[ "$line" != *"\"<<\""* ]]
+            then 
+                _input_next_line=yes
+                _input_char_active=yes
+                _echo=yes
+                _input_char_name="$(echo "$line" | cut -d'<' -f3)"
+                # Verify that _input_char_name isn't empty
+                if [ "x$_input_char_name" = "x" ]
+                then
+                    # loop from 2 to 200 to be sure
+                    for ((i=2; i < 200; i++))
+                    do
+                        _input_char_name="$(echo "$line" | cut -d'<' -f$i)"
+                        [ "x$_input_char_name" != "x" ] && break
+                    done
+                    _pkgbuild_patch_fail=yes
+                fi
+            fi
             #
             # if it's in the function, add \t before the text
             [ "$_in_func" = "yes" ] && echo -e "\\t$line" && _echo=no
@@ -483,6 +531,15 @@ function _pkg_info() {
             # If _echo = yes then show the original line without additions
             [ "$_echo" = "yes" ] && echo "$line" || _echo=yes
         done < <(echo -e "$_pkgbuild_data\\n") > PKGBUILD
+        #
+        # Check if patching failed, if it failed revert the changes
+        if [ "$_pkgbuild_patch_fail" = "yes" ]
+        then
+            _warnprint "failed to patch PKGBUILD, reverting.."
+            _log "copying PKGBUILD.orig to PKGBUILD"
+            cp PKGBUILD.orig PKGBUILD
+            return
+        fi
         # Example pkgver function
         #
         # pkgver() {
