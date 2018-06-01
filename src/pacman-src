@@ -506,7 +506,8 @@ function _pkg_info() {
             # If the line contains '<<' do not add \t to the next line
             if [[ "$line" = *"<<"* ]] && \
                 [[ "$line" != *"'<<'"* ]] && \
-                [[ "$line" != *"\"<<\""* ]]
+                [[ "$line" != *"\"<<\""* ]] && \
+                [[ "$line" != *"< $"* ]]
             then 
                 _input_next_line=yes
                 _input_char_active=yes
@@ -519,7 +520,11 @@ function _pkg_info() {
                     for ((i=2; i < 200; i++))
                     do
                         _input_char_name="$(echo "$line" | cut -d'<' -f$i)"
-                        [ "x$_input_char_name" != "x" ] && break
+                        if [ "x$_input_char_name" != "x" ] && \
+                            [ "$_input_char_name" != "<" ]
+                        then
+                            break
+                        fi
                     done
                     _pkgbuild_patch_fail=yes
                 fi
@@ -578,7 +583,7 @@ function _check_cache() {
         _log "'$_pkg_file' found"
         _cached_found=yes
         _log "checking if package has been installed already"
-        if [ "$(pacman -Qi "$1" | grep Version | cut -d':' -f2 | cut -d'-' -f1 | sed "s/ //g")" = "$pkgver" ]
+        if [ "$(pacman -Qi "$1" | grep Version | sed -e "s/ //g" -e "s/Version://g" | cut -d':' -f2 | rev | cut -d'-' -f2 | rev)" = "$pkgver" ]
         then
             _log "package has been installed already"
             _wprint "Package ${_color_blue}$1-$pkgver ${_color_white}has already been installed!"
