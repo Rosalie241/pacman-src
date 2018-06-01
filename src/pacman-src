@@ -314,6 +314,7 @@ function _start_build() {
             mkdir -p "$_target_cache_dir"
         fi
         export PKGDEST="$_target_cache_dir"
+        _pkg_file="$_target_cache_dir/$_pkg_file"
     fi
     [ "$_cleanbuild" = "yes" ] && _pkg_clean "$1"
     if makepkg "${_makepkg_flags[@]}"
@@ -358,7 +359,8 @@ function _checkreq() {
     then
         ID=NULL
         export "$(grep ID /etc/os-release | head -1)" 2>/dev/null
-        if [ "$ID" != "arch" ]
+        if [ "$ID" != "arch" ] || \
+            [ "$ID" = "NULL" ]
         then
             if [ "$_distro_warning" = "yes" ]
             then
