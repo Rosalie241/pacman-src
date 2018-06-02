@@ -783,6 +783,7 @@ then
 fi
 for _package in "${_packages[@]}"
 do
+    # shellcheck disable=SC2145
     _log "checking if '$_package' is in '${_dpackages[@]}'"
     for _dpackage in "${_dpackages[@]}"
     do
