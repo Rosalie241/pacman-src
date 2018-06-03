@@ -166,6 +166,7 @@ function _build_cd () {
         if [ -d "$_trunk_dir" ]
         then
             _log "'$_trunk_dir' exists"
+            # shellcheck disable=SC2164
             cd "$_trunk_dir"
             return
         else
@@ -198,6 +199,7 @@ function _build_cd () {
         _trunk_dir="$_target_dir/packages/$repo/$_pkgname/trunk"
         if [ -d "$_trunk_dir" ]
         then
+            # shellcheck disable=SC2164
             cd "$_trunk_dir"
             return
         else
