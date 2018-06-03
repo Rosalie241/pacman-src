@@ -8,7 +8,6 @@ before_install:
 
 install:
   - sudo ./.travis/install.sh
-  - sudo ./.travis/update.sh
 
 script:
   - sudo ./.travis/build.sh
