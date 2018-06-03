@@ -29,6 +29,7 @@ _cache=no
 _update=no
 _build_only=no
 _ignore_installed=no
+_trunk=no
 if [ "x$_system_config_file" = "x" ]
 then
     _system_config_file="/etc/pacman-src.conf"
@@ -158,6 +159,20 @@ function _update_cache() {
 function _build_cd () {
     # note: '$repo' is from _start_search
     _found_dir=false
+    if [ "$_trunk" = "yes" ]
+    then
+        _trunk_dir="$_target_dir/packages/$repo/$_pkgname/trunk"
+        _log "_trunk enabled, checking if '$_trunk_dir' exists"
+        if [ -d "$_trunk_dir" ]
+        then
+            _log "'$_trunk_dir' exists"
+            cd "$_trunk_dir"
+            return
+        else
+            _log "'$_trunk_dir' does not exist"
+            _err "trunk does not exist for '$_pkgname'!"
+        fi
+    fi
     for _arch in "${_repo_archs[@]}"
     do
         for _repo in "$@"
@@ -180,7 +195,14 @@ function _build_cd () {
     then
         _log "package not found in any repos, defaulting to trunk"
         _warnprint "${_color_blue}$_pkgname ${_color_white}not found in the ${_color_blue}$_repo_version ${_color_white}repos, building latest.."
-        cd "$_target_dir/packages/$repo/$_pkgname/trunk" || exit 1
+        _trunk_dir="$_target_dir/packages/$repo/$_pkgname/trunk"
+        if [ -d "$_trunk_dir" ]
+        then
+            cd "$_trunk_dir"
+            return
+        else
+            _err "trunk does not exist for '$_pkgname'!"
+        fi
     fi
 }
 # Search the package
@@ -626,6 +648,7 @@ function _usage() {
         echo "  --reset             resets git repos from the cache"
         echo "  --config=[FILE]     uses configuration options from given config file"
         echo "  --ignore-installed  installs built packages, even if it's already installed"
+        echo "  --trunk             uses trunk, does not use repos"
         echo "  -l, --nocheck       skips do_check function for given package(s)"
         echo "  -c, --cleanbuild    cleans build before building package"
         echo "  -d, --dirty         does not clean, even when build was successful"
@@ -743,6 +766,7 @@ do
         --noconfirm)        _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
         --cleanbuild)       _makepkg_flags+=(--cleanbuild); _cleanbuild=yes;;
         --nocheck)          _makepkg_flags+=(--nocheck);;
+        --trunk)            _trunk=yes;;
         --ignore-installed) _ignore_installed=yes;;
         --testing)          _repo_testing=yes;;
         --dirty)            _clean=no;;
