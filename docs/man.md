@@ -24,7 +24,7 @@ Name | Description
 `--reset` | resets git repos from the cache
 `--config=[FILE]` | uses configuration options from given config file
 `--ignore-installed` | installs built packages, even if it's already installed
-`--trunk` | ses trunk, does not use repos
+`--trunk` | uses trunk, does not use repos
 `-l, --nocheck` | skips do_check function for given package(s)
 `-c, --cleanbuild` | cleans build before building package
 `-d, --dirty` | does not clean, even when build was successful
