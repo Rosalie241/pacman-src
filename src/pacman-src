@@ -30,6 +30,7 @@ _update=no
 _build_only=no
 _ignore_installed=no
 _trunk=no
+_noconfirm=no
 _package_total=0
 _package_num=1
 if [ "x$_system_config_file" = "x" ]
@@ -334,7 +335,6 @@ function _start_build() {
         _cached_found=no
         return
     fi
-    _wprint "[$_package_num/$_package_total] Building ${_color_blue}$1"
     if [ "$_build_only" = "yes" ] || \
         [ "$_cache" = "yes" ]
     then
@@ -605,6 +605,41 @@ function _pkg_info() {
         _log "PKGBUILD has been patched already"
     fi
 }
+# Ask the user if they want to edit the PKGBUILD
+#
+function _ask_edit() {
+    while true
+    do
+        echo -e "${_color_green}=>>${_color_reset} ${_color_white}Do you want to edit the PKGBUILD? [Y/n] ${_color_reset}\\c"
+        read -r _answer
+        # shellcheck disable=SC2154
+        case $_answer in
+            Y|y|yes|"")
+                if [ "$EDITOR" ]
+                then
+                    $EDITOR PKGBUILD
+                elif [ "$VISUAL" ]
+                then
+                    $VISUAL PKGBUILD
+                elif command -v nano > /dev/null 2>&1
+                then
+                    nano PKGBUILD
+                elif command -v vim > /dev/null 2>&1
+                then
+                    vim PKGBUILD
+                elif command -v vi > /dev/null 2>&1
+                then
+                    vi PKGBUILD
+                else
+                    _warnprint "nano, vim and vi not found!"
+                fi
+                return;;
+            N|n|no)
+                return;;
+            *) echo -e "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}Invalid option${_color_reset}";;
+        esac
+    done
+}
 # Checks if package has been built already 
 #
 function _check_cache() {
@@ -692,10 +727,9 @@ function _build_loop() {
         then
             _pkg_info      "$_package"
             _pkg_info_file "$_package"
-            if [ "$_cache" = "yes" ]
-            then
-                _check_cache "$_package"
-            fi
+            [ "$_cache" = "yes" ] && _check_cache "$_package"
+            _wprint "[$_package_num/$_package_total] Building ${_color_blue}$1"
+            [ "$_noconfirm" = "no" ] && _ask_edit
             _start_build "$_package"
             ((_package_num++))
         else
@@ -742,7 +776,7 @@ function _parse_short() {
                 Q) _search_only=yes;;
                 u) _update=yes;;
                 s) _makepkg_flags+=(--skipinteg);;
-                n) _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
+                n) _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm); _noconfirm=yes;;
                 c) _makepkg_flags+=(--cleanbuild); _cleanbuild=yes;;
                 t) _repo_testing=yes;;
                 d) _clean=no;;
@@ -770,7 +804,7 @@ do
         --search)           _search_only=yes;;
         --update)           _update=yes;;
         --skipchecks)       _makepkg_flags+=(--skipinteg);;
-        --noconfirm)        _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm);;
+        --noconfirm)        _makepkg_flags+=(--noconfirm); _pacman_flags+=(--noconfirm); _noconfirm=yes;;
         --cleanbuild)       _makepkg_flags+=(--cleanbuild); _cleanbuild=yes;;
         --nocheck)          _makepkg_flags+=(--nocheck);;
         --trunk)            _trunk=yes;;
