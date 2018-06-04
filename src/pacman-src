@@ -662,7 +662,7 @@ function _usage() {
         echo -e "\\nExamples:"
         echo "  pacman-src base     (re)compiles all packages from base group"
         echo -e "  pacman-src bash -n  compiles and installs bash package without confirmation\\n"
-        echo "Report bugs to https://github.com/tim241/pacman-src"
+        echo "Report bugs to https://github.com/tim241/pacman-src/issues"
     fi
 }
 # Displays version
