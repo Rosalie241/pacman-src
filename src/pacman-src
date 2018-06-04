@@ -30,6 +30,8 @@ _update=no
 _build_only=no
 _ignore_installed=no
 _trunk=no
+_package_total=0
+_package_num=1
 if [ "x$_system_config_file" = "x" ]
 then
     _system_config_file="/etc/pacman-src.conf"
@@ -306,9 +308,11 @@ function _start_search() {
             if [ "$_search_pkg_only" = "no" ]
             then
                 _pkg_group=yes
+                ((_package_total--))
                 for _package in $_group_packages
                 do
                     _packages_group+=("$_package")
+                    ((_package_total++))
                 done
             fi
         else
@@ -330,7 +334,7 @@ function _start_build() {
         _cached_found=no
         return
     fi
-    _wprint "Building ${_color_blue}$1"
+    _wprint "[$_package_num/$_package_total] Building ${_color_blue}$1"
     if [ "$_build_only" = "yes" ] || \
         [ "$_cache" = "yes" ]
     then
@@ -693,6 +697,7 @@ function _build_loop() {
                 _check_cache "$_package"
             fi
             _start_build "$_package"
+            ((_package_num++))
         else
             _pkg_group=no
         fi
@@ -825,6 +830,7 @@ do
         _log "adding '$_package' to _stripped_packages and _dpackages"
         _stripped_packages+=("$_package")
         _dpackages+=("$_package")
+        ((_package_total++))
     fi
 done
 _search_pkg_only=no
