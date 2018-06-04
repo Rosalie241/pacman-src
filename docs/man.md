@@ -40,7 +40,3 @@ Name | Description
 ---- | -----------
 `pacman-src base` | (re)compiles all packages from base group
 `pacman-src bash -n` | compiles and installs bash package without confirmation
-
-### Bugs
-Report bugs to https://github.com/tim241/pacman-src
-
