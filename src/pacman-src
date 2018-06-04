@@ -630,8 +630,11 @@ function _ask_edit() {
                 elif command -v vi > /dev/null 2>&1
                 then
                     vi PKGBUILD
-                else
-                    _warnprint "nano, vim and vi not found!"
+                elif command -v emacs > /dev/null 2>&1
+                then
+                    emacs PKGBUILD
+                else                    
+                    _warnprint "nano, vim, vi or emacs could not be found!"
                 fi
                 return;;
             N|n|no)
