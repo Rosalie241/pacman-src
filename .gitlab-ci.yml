@@ -1,0 +1,16 @@
+image: archlinux/base
+
+services:
+  - docker 
+
+before_script:
+  - pacman -Syyu --noconfirm
+  - pacman -S help2man base-devel shellcheck git --noconfirm
+
+build-run:
+  stage: build
+  script:
+    - make VERSION=$(git describe --always)
+    - make install prefix=/usr
+    - pacman-src --version
+    - shellcheck /usr/bin/pacman-src -x
