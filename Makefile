@@ -16,5 +16,10 @@ install:
 	install -D bin/man/pacman-src.1.gz 	"${DESTDIR}/usr/man/man1/pacman-src.1.gz"
 check:
 	shellcheck bin/pacman-src -x
+test:
+	bin/pacman-src -uq --reset
+	bin/pacman-src -Qq base
+	bin/pacman-src -Qq base base-devel
+	bin/pacman-src -Qq bash base
 clean:
 	rm -rf bin
