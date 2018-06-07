@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# pacman-src - https://github.com/tim241/pacman-src
+# pacman-src - https://gitlab.com/tim241/pacman-src
 #
 # Copyright (C) 2018 Tim Wanders <timwanders241@gmail.com>
 #
@@ -704,7 +704,7 @@ function _usage() {
         echo -e "\\nExamples:"
         echo "  pacman-src base     (re)compiles all packages from base group"
         echo -e "  pacman-src bash -n  compiles and installs bash package without confirmation\\n"
-        echo "Report bugs to https://github.com/tim241/pacman-src/issues"
+        echo "Report bugs to https://gitlab.com/tim241/pacman-src/issues"
     fi
 }
 # Displays version
