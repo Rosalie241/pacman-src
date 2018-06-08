@@ -3,7 +3,7 @@ prefix="/usr/local"
 VERSION="$(shell cat ./version)"
 build: clean configure gen-man
 configure:
-	mkdir -p bin bin/man bin/etc
+	@mkdir -p bin bin/man bin/etc
 	install -D -m=775 "src/pacman-src"	"bin/pacman-src"
 	install -D "src/conf/pacman-src.conf"	"bin/etc/pacman-src.conf"
 	sed -i "s/@VERSION@/$(VERSION)/g"		"bin/pacman-src"
@@ -22,4 +22,4 @@ test:
 	bin/pacman-src -Qq base base-devel
 	bin/pacman-src -Qq bash base
 clean:
-	rm -rf bin
+	@rm -rf bin
