@@ -330,11 +330,6 @@ function _pkg_clean() {
 # Start the build using makepkg
 #
 function _start_build() {
-    if [ "$_cached_found" = "yes" ]
-    then
-        _cached_found=no
-        return
-    fi
     if [ "$_build_only" = "yes" ] || \
         [ "$_cache" = "yes" ]
     then
@@ -734,9 +729,11 @@ function _build_loop() {
             if [ "$_cached_found" = "no" ]
             then
                 _wprint "[$_package_num/$_package_total] Building ${_color_blue}$_package"
+                [ "$_noconfirm" = "no" ] && _ask_edit
+                _start_build "$_package"
+            else
+                _cached_found=no
             fi
-            [ "$_noconfirm" = "no" ] && _ask_edit
-            _start_build "$_package"
             ((_package_num++))
         else
             _pkg_group=no
