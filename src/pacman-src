@@ -485,10 +485,6 @@ function _pkg_info() {
         # pkgver=1.0_src \n origpkgver=1.0
         _sprint "changing pkgver to ${_color_blue}${pkgver}_src"
         _pkgbuild_data="$(cat PKGBUILD)"
-        _in_func=no
-        _in_func_next=no
-        _input_char_active=no
-        _pkgbuild_patch_fail=no
         _echo=yes
         while read -r line 
         do
