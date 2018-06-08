@@ -731,7 +731,10 @@ function _build_loop() {
             _pkg_info      "$_package"
             _pkg_info_file "$_package"
             [ "$_cache" = "yes" ] && _check_cache "$_package"
-            _wprint "[$_package_num/$_package_total] Building ${_color_blue}$1"
+            if [ "$_cached_found" = "no" ]
+            then
+                _wprint "[$_package_num/$_package_total] Building ${_color_blue}$_package"
+            fi
             [ "$_noconfirm" = "no" ] && _ask_edit
             _start_build "$_package"
             ((_package_num++))
