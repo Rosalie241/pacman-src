@@ -30,6 +30,7 @@ _update=no
 _build_only=no
 _ignore_installed=no
 _trunk=no
+_sed=no
 _noconfirm=no
 _package_total=0
 _package_num=1
@@ -525,7 +526,18 @@ function _pkg_info() {
         then
             _sprint "changing pkgver function to dummy function"
             _rline=$((_line + 1)) 2> /dev/null
-            sed -i "${_rline}s^.*^\\techo \\'${pkgver}_src\\'\\n\\treturn\\n^g" PKGBUILD
+            sed -i "${_rline}s^.*^    echo \\'${pkgver}_src\\'\\n    return\\n^g" PKGBUILD
+        fi
+        # Apply regex options if enabled
+        #
+        if [ "$_sed" = "yes" ] && \
+            [ "x$_sed_options" != "x" ]
+        then
+            _sprint "applying regex to PKGBUILD"
+            if ! sed -i "$_sed_options" PKGBUILD
+            then
+                _warnprint "Failed to apply regex options, reverting"
+            fi
         fi
         _sprint "generating SRCINFO"
         makepkg --printsrcinfo > .SRCINFO
@@ -622,6 +634,7 @@ function _usage() {
         echo "  --config=[FILE]     uses configuration options from given config file"
         echo "  --ignore-installed  installs built packages, even if it's already installed"
         echo "  --trunk             uses trunk, does not use repos"
+        echo "  --sed=[REGEX]       applies regex to PKGBUILD using sed"
         echo "  -l, --nocheck       skips do_check function for given package(s)"
         echo "  -c, --cleanbuild    cleans build before building package"
         echo "  -d, --dirty         does not clean, even when build was successful"
@@ -753,6 +766,7 @@ do
         --cache)            _cache=yes;;
         --ignore)           _ignore_error=yes;;
         --nowarn)           _nowarn=yes;;
+        --sed=*)             _sed_options="$(echo "$_argument" | sed "s|--sed=||g")"; _sed=yes;;
         --config=*)         _use_config "$_argument";;
         --verbose)          _verbose=yes;;
         --help)             _usage; exit;;
