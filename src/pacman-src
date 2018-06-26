@@ -143,7 +143,7 @@ function _init_cache() {
             if [ ! -d "$_target_dir/packages/$_git_clone_dir" ]
             then
                 _log "Cloning '$_git_link' to '$_target_dir/packages/$_git_clone_dir'"
-                git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir"
+                git clone "$_git_link"  "${_git_flags[@]}" "$_target_dir/packages/$_git_clone_dir" -q
             fi
         done 
     fi
