@@ -551,31 +551,25 @@ function _pkg_info() {
 function _ask_edit() {
     while true
     do
+        _editor_found=no
         echo -e "${_color_green}=>>${_color_reset} ${_color_white}Do you want to edit the PKGBUILD? [Y/n] ${_color_reset}\\c"
         read -r _answer
         # shellcheck disable=SC2154
         case $_answer in
             Y|y|yes|"")
-                if [ "$EDITOR" ]
+                # shellcheck disable=SC2153
+                for editor in "$EDITOR" "$VISUAL" nano vim vi emacs
+                do
+                    if command -v "$editor" > /dev/null 2>&1
+                    then
+                        "$editor" PKGBUILD
+                        _editor_found=yes
+                        break
+                    fi
+                done
+                if [ "$_editor_found" = "no" ]
                 then
-                    $EDITOR PKGBUILD
-                elif [ "$VISUAL" ]
-                then
-                    $VISUAL PKGBUILD
-                elif command -v nano > /dev/null 2>&1
-                then
-                    nano PKGBUILD
-                elif command -v vim > /dev/null 2>&1
-                then
-                    vim PKGBUILD
-                elif command -v vi > /dev/null 2>&1
-                then
-                    vi PKGBUILD
-                elif command -v emacs > /dev/null 2>&1
-                then
-                    emacs PKGBUILD
-                else                    
-                    _warnprint "nano, vim, vi or emacs could not be found!"
+                    _warnprint "nano, vim, vi and emacs could not be found!"
                 fi
                 return;;
             N|n|no)
