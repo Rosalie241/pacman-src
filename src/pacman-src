@@ -552,13 +552,13 @@ function _ask_edit() {
     while true
     do
         _editor_found=no
-        echo -e "${_color_green}=>>${_color_reset} ${_color_white}Do you want to edit the PKGBUILD? [Y/n] ${_color_reset}\\c"
+        echo -e "${_color_green}=>>${_color_reset} ${_color_white}Do you want to edit the PKGBUILD? [y/N] ${_color_reset}\\c"
         read -r _answer
         # print newline
         echo
         # shellcheck disable=SC2154
         case $_answer in
-            Y|y|yes|"")
+            Y|y|yes)
                 # shellcheck disable=SC2153
                 for editor in "$EDITOR" "$VISUAL" nano vim vi emacs
                 do
@@ -574,7 +574,7 @@ function _ask_edit() {
                     _warnprint "nano, vim, vi and emacs could not be found!"
                 fi
                 return;;
-            N|n|no)
+            N|n|no|"")
                 return;;
             *) echo -e "${_color_yel}=>> WARNING:${_color_reset} ${_color_white}Invalid option${_color_reset}\\n";;
         esac
