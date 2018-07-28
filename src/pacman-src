@@ -534,10 +534,13 @@ function _pkg_info() {
             [ "x$_sed_options" != "x" ]
         then
             _sprint "applying regex to PKGBUILD"
-            if ! sed -i "$_sed_options" PKGBUILD
-            then
-                _warnprint "Failed to apply regex options, reverting"
-            fi
+            for _sed_option in "${_sed_options[@]}"
+            do
+                if ! sed -i "$_sed_option" PKGBUILD
+                then
+                    _warnprint "Failed to apply regex options, reverting"
+                fi
+            done
         fi
         _sprint "generating SRCINFO"
         makepkg --printsrcinfo > .SRCINFO
@@ -762,7 +765,7 @@ do
         --cache)            _cache=yes;;
         --ignore)           _ignore_error=yes;;
         --nowarn)           _nowarn=yes;;
-        --sed=*)            _sed_options="${_argument/--sed=/}"; _sed=yes;;
+        --sed=*)            _sed_options+=("${_argument/--sed=/}"); _sed=yes;;
         --config=*)         _use_config "$_argument";;
         --verbose)          _verbose=yes;;
         --help)             _usage; exit;;
