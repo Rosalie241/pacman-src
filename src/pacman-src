@@ -493,10 +493,10 @@ function _pkg_info() {
             # if the line contains pkgver= then replace and add
             # pkgver=[VERSION]_src
             # origpkgver=[VERSION]
-            [[ "$line" = "pkgver="* ]] && echo -e "pkgver=${pkgver}_src\\norigpkgver=$pkgver" && _echo=no
+            [[ "$line" = "pkgver="* ]] && echo "pkgver=${pkgver}_src"$'\n'"norigpkgver=$pkgver" && _echo=no
 
-            [ "$_echo" = "yes" ] && echo -e "$line"
-        done < <(echo -e "$_pkgbuild_data\\n") > PKGBUILD
+            [ "$_echo" = "yes" ] && echo "$line"
+        done < <(echo "$_pkgbuild_data") > PKGBUILD
         #
         # Check if patching failed, if it failed revert the changes
         if ! shfmt -i 4 -ln=bash -w PKGBUILD
