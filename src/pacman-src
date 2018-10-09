@@ -729,7 +729,7 @@ function _parse_short() {
                 c) _makepkg_flags+=(--cleanbuild); _cleanbuild=yes;;
                 t) _repo_testing=yes;;
                 d) _clean=no;;
-                f) _makepkg_flags+=(-f); _pacman_flags+=(--force);;
+                f) _makepkg_flags+=(-f); _pacman_flags+=(--overwrite \*);;
                 l) _makepkg_flags+=(--nocheck);;
                 m) _cache=yes;;
                 g) _ignore_error=yes;;
@@ -761,7 +761,7 @@ do
         --testing)          _repo_testing=yes;;
         --dirty)            _clean=no;;
         --reset)            _reset;;
-        --force )           _makepkg_flags+=(-f); _pacman_flags+=(--force);;
+        --force )           _makepkg_flags+=(-f); _pacman_flags+=(--overwrite \*);;
         --cache)            _cache=yes;;
         --ignore)           _ignore_error=yes;;
         --nowarn)           _nowarn=yes;;
