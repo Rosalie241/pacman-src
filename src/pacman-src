@@ -557,6 +557,53 @@ function _pkg_info() {
         fi
     fi
 }
+# Imports PGP key
+#
+function _pgp_import() {
+    # return if there are no pgp keys defined
+    # shellcheck disable=SC2154
+    if [ ! "${validpgpkeys[@]}" ]
+    then
+        return
+    fi
+
+    local _pgp_import_list _pgp_key _answer
+
+    _log "checking if pgp keys have been imported already"
+    if ! gpg --list-keys --fingerprint "${validpgpkeys[@]}" &> /dev/null
+    then
+        # check which keys haven't been imported yet
+        for _pgp_key in "${validpgpkeys[@]}"
+        do
+            if ! gpg --list-keys --fingerprint "$_pgp_key" &> /dev/null
+            then
+                _pgp_import_list+=("$_pgp_key")
+            fi
+        done
+
+        _wprint "Unimported PGP keys found:"
+        for _pgp_key in "${_pgp_import_list[@]}"
+        do
+            _sprint "$_pgp_key"
+        done
+
+        if [ "$_noconfirm" = "no" ]
+        then
+            echo -e "\n${_color_green}=>>${_color_reset} ${_color_white}Do you want to import the PGP key(s)? [Y/n] ${_color_reset}\\c"
+            read -r _answer
+            case $_answer in
+                n|N|no)
+                    return;;
+            esac
+        fi
+
+        _wprint "Importing PGP key(s)"
+        if ! gpg --recv-keys "${_pgp_import_list[@]}" &> /dev/null
+        then
+            _warnprint "Failed to import PGP keys"
+        fi
+    fi
+}
 # Ask the user if they want to edit the PKGBUILD
 #
 function _ask_edit() {
@@ -685,6 +732,7 @@ function _build_loop() {
             then
                 _wprint "[$_package_num/$_package_total] Building ${_color_blue}$_package"
                 [ "$_noconfirm" = "no" ] && _ask_edit
+                _pgp_import
                 _start_build "$_package"
             else
                 _cached_found=no
