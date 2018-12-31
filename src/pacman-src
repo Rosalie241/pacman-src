@@ -371,7 +371,7 @@ function _checkreq() {
     _missing_req=no
     for _cmd in git pacman bash makepkg ln sudo
     do
-        if ! command -v $_cmd > /dev/null 2>/dev/null
+        if ! command -v $_cmd &> /dev/null
         then
             _errprint "Missing requirement: ${_color_blue}$_cmd"
             _missing_req=yes
@@ -620,7 +620,7 @@ function _ask_edit() {
                 # shellcheck disable=SC2153
                 for editor in "$EDITOR" "$VISUAL" nano vim vi emacs
                 do
-                    if command -v "$editor" > /dev/null 2>&1
+                    if command -v "$editor" &> /dev/null
                     then
                         "$editor" PKGBUILD
                         _editor_found=yes
@@ -766,7 +766,7 @@ function _reset() {
         then
             cd "$_target_dir/packages/$repo" || return
             _sprint "resetting ${_color_blue}$repo"
-            git reset --hard > /dev/null 2>&1
+            git reset --hard &> /dev/null
         fi
     done
 }
