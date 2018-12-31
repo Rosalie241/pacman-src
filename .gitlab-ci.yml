@@ -2,7 +2,7 @@ image: archlinux/base
 
 before_script:
   - pacman -Syyu --noconfirm
-  - pacman -S help2man base-devel shellcheck git --noconfirm --needed
+  - pacman -S help2man base-devel shellcheck git man-db --noconfirm --needed
 
 build:
   stage: build
@@ -23,3 +23,10 @@ test:
   script:
     - useradd tester -m
     - sudo --user=tester make test
+
+man:
+  stage: test
+  script:
+    - make install prefix=/usr
+    - export MANPAGER=cat
+    - man pacman-src
