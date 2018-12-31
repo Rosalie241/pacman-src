@@ -28,6 +28,7 @@ _cached_found=no
 _cache=no
 _update=no
 _build_only=no
+_patch_pkgbuild=yes
 _ignore_installed=no
 _trunk=no
 _sed=no
@@ -458,9 +459,13 @@ function _pkg_info() {
     # shellcheck disable=SC1091
     source ./PKGBUILD 2> /dev/null
     # Check if PKGBUILD has been patched already
-    _log "checking if PKGBUILD has been patched"
+    if [ "$_patch_pkgbuild" = "yes" ]
+    then
+        _log "checking if PKGBUILD has been patched"
+    fi
     # shellcheck disable=SC2016
-    if [[ "$pkgver" != *"_src" ]]
+    if [[ "$pkgver" != *"_src" ]] && \
+        [ "$_patch_pkgbuild" = "yes" ]
     then
         [ ! -f "PKGBUILD.orig" ] && cp PKGBUILD PKGBUILD.orig
         _log "PKGBUILD has not been patched, patching"
@@ -546,7 +551,10 @@ function _pkg_info() {
         makepkg --printsrcinfo > .SRCINFO
         pkgver="${pkgver}_src"
     else
-        _log "PKGBUILD has been patched already"
+        if [ "$_patch_pkgbuild" = "yes" ]
+        then
+            _log "PKGBUILD has been patched already"
+        fi
     fi
 }
 # Ask the user if they want to edit the PKGBUILD
@@ -634,6 +642,7 @@ function _usage() {
         echo "  --ignore-installed  installs built packages, even if it's already installed"
         echo "  --trunk             uses trunk, does not use repos"
         echo "  --sed=[REGEX]       applies regex to PKGBUILD using sed"
+        echo "  --nopatch           doesn't patch pkgver in PKGBUILD"
         echo "  -l, --nocheck       skips do_check function for given package(s)"
         echo "  -c, --cleanbuild    cleans build before building package"
         echo "  -d, --dirty         does not clean, even when build was successful"
@@ -766,6 +775,7 @@ do
         --ignore)           _ignore_error=yes;;
         --nowarn)           _nowarn=yes;;
         --sed=*)            _sed_options+=("${_argument/--sed=/}"); _sed=yes;;
+        --nopatch)          _patch_pkgbuild=no;;
         --config=*)         _use_config "$_argument";;
         --verbose)          _verbose=yes;;
         --help)             _usage; exit;;
