@@ -562,7 +562,7 @@ function _pkg_info() {
 function _pgp_import() {
     # return if there are no pgp keys defined
     # shellcheck disable=SC2154
-    if [ ! "${validpgpkeys[@]}" ]
+    if [ ! "${validpgpkeys[0]}" ]
     then
         return
     fi
