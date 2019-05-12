@@ -381,20 +381,22 @@ function _checkreq() {
     then
         exit 1
     fi
-    if [ -f "/etc/os-release" ]
+
+    ID=""
+    if [ -f /etc/os-release ]
     then
-        ID=NULL
         export "$(grep ID /etc/os-release | head -1)" 2>/dev/null
-        if [ "$ID" != "arch" ] || \
-            [ "$ID" = "NULL" ]
-        then
-            if [ "$_distro_warning" = "yes" ]
-            then
-                _warnprint "Unsupported platform detected, continue at your own risk"
-            fi
-        fi
-        unset ID
     fi
+
+    if [ "$ID" != "arch" ] || \
+        [ "x$ID" = "x" ]
+    then
+        if [ "$_distro_warning" = "yes" ]
+        then
+            _warnprint "Unsupported platform detected, continue at your own risk"
+        fi
+    fi
+    unset ID
 }
 # Get Package filename
 function _pkg_info_file() {
