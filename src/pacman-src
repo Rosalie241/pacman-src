@@ -775,7 +775,7 @@ function _reset() {
 # Short argument parser
 #
 function _parse_short() {
-    args=$(echo "$@" | sed "s/-//g" | grep -o .)
+    args=$(sed "s/-//g" <<< "$@" | grep -o .)
     for arg in $args
     do
         case $arg in
