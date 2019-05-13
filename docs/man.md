@@ -25,7 +25,6 @@ Name | Description
 `--config=[FILE]` | uses configuration options from given config file
 `--ignore-installed` | installs built packages, even if it's already installed
 `--trunk` | uses trunk, does not use repos
-`--sed=[REGEX]` | applies regex to PKGBUILD using sed
 `-l, --nocheck` | skips do_check function for given package(s)
 `-c, --cleanbuild` | cleans build before building package
 `-d, --dirty` | does not clean, even when build was successful
