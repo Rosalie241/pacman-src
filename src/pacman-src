@@ -142,7 +142,7 @@ function _update_cache() {
         cd "$_target_dir/packages/$repo" || exit 1
         _sprint "updating ${_color_blue}$repo ${_color_white}repo"
         git fetch --all "${_git_flags[@]}" > /dev/null
-        git reset --hard                   > /dev/null
+        git reset --hard origin/master     > /dev/null
     done
 }
 function _build_cd () {
